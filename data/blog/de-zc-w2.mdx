@@ -424,7 +424,7 @@ Parametrization can allow us to call a pipeline on demand for a specified date. 
 
 We can use parameters within Mage, similair to how we've previously implemented it, but with some slight differences.
 
-Let's add an additional `Data Exporter` to our pre-existing pipeline so we can implement some parameters. The parameter we are adding is the `execution_date` which is a built in parameter that is created when executing the pipeline code. We are assigning the execution date to a variable named `now` and then using the `strftime()` function, which stands for "string format time", to convert a datetime object into a string format of our choosing. This can be useful for applying a consistent naming format to our files for storage.
+Let's add an additional `Data Exporter` to our pre-existing pipeline so we can implement some parameters. The parameter we are adding is the `execution_date` which is a built in parameter that is created when executing the pipeline code. We are assigning the execution date to a variable named `now` and then using the `strftime()` function, which stands for "string format time", to convert a datetime object into a string format of our choosing. This can be useful for applying a consistent naming format to our files for storage. Be sure to check your cloud storage container to see resulting filepath of our pipeline output.
 
 ***Pro tip: You can use the shortcut commands `CTRL-K-C` & `CTRL-K-U` to comment out blocks of code at a time. Use `CTRL-K-C` to uncomment the commented out block of code below when you are ready for the script to export your data.***
 
