@@ -6,24 +6,13 @@ draft: false
 summary: Detailed insights from Week 2 of the Data Engineering Zoomcamp. Covering workflow orchestration with Mage, specifically using Python and PostgreSQL.
 ---
 
-Week 2 of the DTC Data Engineering Zoomcamp is all about workflow orchesteration utilizing Mage.  
+In Week 2 of the DTC Data Engineering Zoomcamp, we delve into the art of workflow orchestration using Mage. Imagine being a chef, where every step in a recipe is crucial to the final dish. Similarly, in data engineering, orchestration is about carefully coordinating tasks to ensure efficiency and effectiveness. This concept, eloquently described in 'Fundamentals of Data Engineering: Plan and Build Robust Data Systems' by Joe Reis, Matt Housley, et al., as 'the process of coordinating many jobs to run as quickly and efficiently as possible on a scheduled cadence,' is a cornerstone of our field. It involves strategically sequencing and managing tasks to optimize performance and output, much like preparing a complex dish.
 
-Orchestration is defined as an important undercurrent of Data Engineering in ***Fundamentals of Data Engineering: Plan and Build Robust Data Systems***
-by Joe Reis, Matt Housley, et al. Orchestration tools such as Mage helps us define task dependencies and schedule workflows. A simple analogy is cooking. Depending on the recipe, there are a few steps or tasks involved that are dependent on each others completion before you can proceed to the next task or step.
+For instance, consider the steps in crafting my favorite pasta dish, [Penne alla Vodka](https://www.delish.com/cooking/recipe-ideas/a26556220/penne-alla-vodka-recipe/): from boiling water to the final garnish of parmesan and basil. Each step relies on the previous one, akin to how workflow orchestration operates in data engineering. In this week's module, `Workflow Orchestration,` [Matt Palmer](https://www.linkedin.com/in/matt-palmer/), an author and Relations Developer at Mage, walks us through the creation of an ETL pipeline with Mage. You can find links to the original videos in the [Week 2 readme](https://github.com/DataTalksClub/data-engineering-zoomcamp/blob/main/02-workflow-orchestration/README.md). Our journey starts with extracting data (New York Taxi data, in our case), transforming it for clarity and usefulness, and finally, exporting it to a PostgreSQL database and a Google Cloud Storage bucket. Just as the final step in our pasta recipe brings all the ingredients together, our data, now processed and refined, is ready to be served.
 
-For example, let's look at the steps involved in cooking my favorite pasta recipe, [Penne alla Vodka](https://www.delish.com/cooking/recipe-ideas/a26556220/penne-alla-vodka-recipe/):
+Before we start, be sure to check out the DataTalksClub website [here](https://datatalks.club/) where you will find links to a slack channel and other resources that will help in your journey to becoming a data engineer.
 
-1. Bring water to a boil
-2. Cook for 10-12 minutes until al dente
-3. Mix Pasta with one of our favorite sauces 
-4. Top with parmesan & basil prior to serving
-
-Each task is dependent on the completion of the previous task and Workflow Orchestration is essentially the same thing. In the Data Talks Club Week 2 module, [Workflow Orchestration](https://github.com/DataTalksClub/data-engineering-zoomcamp/tree/main/02-workflow-orchestration), this is demosntrated via an ETL pipeline with Mage and the steps involved are as follows:
-
-1. Extract data (New York Taxi data in our case) using a `Data Loader` with `Mage` from an remote endpoint
-2. Transform data using a `Transformation` block (perform any desired filtering or data cleansing)
-3. Export our data into a data store (in our case, a PostgreSQL database & a Google Cloud Storage bucket) with the `Data Exporter` block.
-4. Now our data is ready to be served!
+Lastly, you can find the github repository for this specific course [here](https://github.com/DataTalksClub/data-engineering-zoomcamp). Be sure to star the repository!
 
 - [Configuring Mage](#configuring-mage)
 - [Building an ETL Pipeline with Mage (postgreSQL)](#building-an-etl-pipeline-with-mage-postgresql)
@@ -43,6 +32,7 @@ Each task is dependent on the completion of the previous task and Workflow Orche
   - [GCS to BigQuery](#gcs-to-bigquery)
 - [Scheduling a Workflow (Automating Pipeline)](#scheduling-a-workflow-automating-pipeline)
 - [Parameterization](#parameterization)
+- [In Summary](#in-summary)
 - [Looking Ahead](#looking-ahead)
 
 
@@ -475,5 +465,16 @@ def export_data_to_google_cloud_storage(df: DataFrame, **kwargs) -> None:
 
 ```
 
+# In Summary
+
+This week's journey through the Data Engineering Zoomcamp has taken us deep into the heart of workflow orchestration with Mage. We've explored:
+
+    - **The Fundamentals of Workflow Orchestration:** Understanding how Mage, much like a meticulous chef in a kitchen, helps us define, organize, and execute tasks in a precise order.
+    - **Building an ETL Pipeline: We walked through constructing an efficient ETL pipeline using Mage, highlighting the integration with Python, PostgreSQL and Google Cloud Storage for effective data handling.
+    - **Advanced Concepts:** Delving into partitioning with Parquet files and pipeline scheduling, we touched upon more advanced topics that will further enhance our engineering skills.
+
 # Looking Ahead
+
+I hope this post has been insightful to anyone struggling with the Zoomcamp. I'm looking forward to diving into the Week 3 content and sharing what I've learned here in future posts to come. 
+
 
