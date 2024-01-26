@@ -29,7 +29,6 @@ Lastly, you can find the github repository for this specific course [here](https
   - [Update Mage Configuration (Environmental Variables)](#update-mage-configuration-environmental-variables)
   - [Testing Mage connection to GCP](#testing-mage-connection-to-gcp)
   - [Partitioning with Parquet Files](#partitioning-with-parquet-files)
-  - [GCS to BigQuery](#gcs-to-bigquery)
 - [Scheduling a Workflow (Automating Pipeline)](#scheduling-a-workflow-automating-pipeline)
 - [Parameterization](#parameterization)
 - [In Summary](#in-summary)
@@ -405,7 +404,6 @@ def export_data_to_google_cloud_storage(df: DataFrame, **kwargs) -> None:
         filesystem=gcs
     )
 ```
-## GCS to BigQuery
 
 # Scheduling a Workflow (Automating Pipeline)
 
