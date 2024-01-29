@@ -8,7 +8,7 @@ const siteMetadata = {
   theme: 'system', // system, dark or light
   siteUrl: 'https://jonahboliver.com',
   siteRepo: 'https://github.com/jboliv01/next-js-blog',
-  siteLogo: '/static/images/code.png',
+  siteLogo: '/static/favicons/blob-scene-haikei-favicon-16x16.png',
   socialBanner: '/static/images/blob-scene-haikei-social-banner.png',
   email: 'jboliv01@gmail.com',
   github: 'https://github.com',
