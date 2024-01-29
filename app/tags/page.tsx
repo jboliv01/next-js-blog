@@ -3,8 +3,14 @@ import Tag from '@/components/Tag'
 import { slug } from 'github-slugger'
 import tagData from 'app/tag-data.json'
 import { genPageMetadata } from 'app/seo'
+import dynamic from 'next/dynamic';
 
 export const metadata = genPageMetadata({ title: 'Tags', description: 'Things I blog about' })
+
+/* Import ClientSideChart dynamically and disable SSR for it */
+const ClientSideChart = dynamic(() => import('@/components/ClientSideChart'), {
+  ssr: false,
+});
 
 export default async function Page() {
   const tagCounts = tagData as Record<string, number>
@@ -17,6 +23,8 @@ export default async function Page() {
           <h1 className="text-3xl font-extrabold leading-9 tracking-tight text-gray-900 dark:text-gray-100 sm:text-4xl sm:leading-10 md:border-r-2 md:px-6 md:text-6xl md:leading-14">
             Tags
           </h1>
+        </div>
+        <div>
         </div>
         <div className="flex max-w-lg flex-wrap">
           {tagKeys.length === 0 && 'No tags found.'}
@@ -34,6 +42,9 @@ export default async function Page() {
               </div>
             )
           })}
+        </div>
+        <div>
+        <ClientSideChart tagCounts={tagCounts} sortedTags={sortedTags} />
         </div>
       </div>
     </>
