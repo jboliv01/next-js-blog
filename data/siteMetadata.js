@@ -9,10 +9,10 @@ const siteMetadata = {
   siteUrl: 'https://jonahboliver.com',
   siteRepo: 'https://github.com/jboliv01/next-js-blog',
   siteLogo: '/static/images/code.png',
-  socialBanner: '/static/images/data-mentor.png',
+  socialBanner: '/static/images/blob-scene-haikei-social-banner.png',
   email: 'jboliv01@gmail.com',
   github: 'https://github.com',
-  twitter: 'https://twitter.com/Twitter',
+  twitter: 'https://twitter.com/jonah_oliver',
   linkedin: 'https://www.linkedin.com/in/jonah-oliver/',
   locale: 'en-US',
   analytics: {
