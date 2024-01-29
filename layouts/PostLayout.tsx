@@ -84,9 +84,9 @@ export default function PostLayout({ content, authorDetails, next, prev, childre
                               {author.twitter.replace(author.twitter, '@Twitter')}
                             </Link>
                           )}
-                          </dd>
-                          <dt className="sr-only">LinkedIn</dt>
-                          <dd>
+                        </dd>
+                        <dt className="sr-only">LinkedIn</dt>
+                        <dd>
                           {author.linkedin && (
                             <Link
                               href={author.linkedin}
@@ -95,7 +95,7 @@ export default function PostLayout({ content, authorDetails, next, prev, childre
                               {author.linkedin.replace(author.linkedin, '@LinkedIn')}
                             </Link>
                           )}
-                          </dd>
+                        </dd>
                       </dl>
                     </li>
                   ))}
