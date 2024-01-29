@@ -81,10 +81,21 @@ export default function PostLayout({ content, authorDetails, next, prev, childre
                               href={author.twitter}
                               className="text-primary-500 hover:text-primary-600 dark:hover:text-primary-400"
                             >
-                              {author.twitter.replace('https://twitter.com/', '@')}
+                              {author.twitter.replace(author.twitter, '@Twitter')}
                             </Link>
                           )}
-                        </dd>
+                          </dd>
+                          <dt className="sr-only">LinkedIn</dt>
+                          <dd>
+                          {author.linkedin && (
+                            <Link
+                              href={author.linkedin}
+                              className="text-primary-500 hover:text-primary-600 dark:hover:text-primary-400"
+                            >
+                              {author.linkedin.replace(author.linkedin, '@LinkedIn')}
+                            </Link>
+                          )}
+                          </dd>
                       </dl>
                     </li>
                   ))}
