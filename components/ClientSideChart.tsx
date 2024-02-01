@@ -37,6 +37,8 @@ const ClientSideChart = ({ tagCounts, sortedTags }) => {
         borderWidth: 0,
         hoverBackgroundColor: isDarkMode ? 'white' : 'darkgray',
         borderRadius: 2,
+        inflateAmount: 2,
+       
 
       },
     ],
@@ -44,7 +46,7 @@ const ClientSideChart = ({ tagCounts, sortedTags }) => {
 
   const options = {
     responsive: true,
-    indexAxis: 'y',
+    indexAxis: 'x',
     scales: {
       x: {
         display: false,
@@ -65,9 +67,11 @@ const ClientSideChart = ({ tagCounts, sortedTags }) => {
         ticks: {
           color: isDarkMode ? 'white' : '#41b19f',
           font: {
-            size: 14,
+            size: 20,
             weight: 'normal',
+            
           },
+          stepSize: 1,
       },
         grid: {
           display: false,
