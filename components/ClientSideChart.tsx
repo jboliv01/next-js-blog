@@ -49,7 +49,7 @@ const ClientSideChart = ({ tagCounts, sortedTags }) => {
     indexAxis: 'x',
     scales: {
       x: {
-        display: false,
+        display: true,
         stacked: false,
         ticks: {
           color: isDarkMode ? 'white' : 'black',
@@ -65,9 +65,9 @@ const ClientSideChart = ({ tagCounts, sortedTags }) => {
       y: {
         stacked: false,
         ticks: {
-          color: isDarkMode ? 'white' : '#41b19f',
+          color: isDarkMode ? 'white' : 'black',
           font: {
-            size: 20,
+            size: 16,
             weight: 'normal',
             
           },
