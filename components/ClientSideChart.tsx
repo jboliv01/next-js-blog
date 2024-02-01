@@ -3,10 +3,12 @@
 
 import React, { useState, useEffect } from 'react';
 import { Bar } from 'react-chartjs-2';
+import { useTheme } from 'next-themes';
 import 'chart.js/auto';
 
 const ClientSideChart = ({ tagCounts, sortedTags }) => {
-  const [isDarkMode, setIsDarkMode] = useState(true);
+  const { theme, resolvedTheme } = useTheme();
+  const isDarkMode = theme === 'dark' || resolvedTheme === 'dark';
   console.log(isDarkMode)
   // Function to generate color variations
   const generateColorVariations = (color: string, count: number): string[] => {
@@ -26,42 +28,63 @@ const ClientSideChart = ({ tagCounts, sortedTags }) => {
   const colorVariations = [...colorVariationsLight, ...colorVariationsDark];
 
   const pieData = {
-    labels: sortedTags,
+    labels: sortedTags.map(tag => tag.toUpperCase()),
     datasets: [
       {
         data: sortedTags.map(tag => tagCounts[tag]),
-        backgroundColor: isDarkMode ? colorVariationsDark : colorVariationsLight,
+        backgroundColor: colorVariationsDark,
         borderColor: isDarkMode ? 'white' : 'black', // Using white for border to distinguish between similar colors
-        borderWidth: 1,
-        hoverBackgroundColor: isDarkMode ? 'darkgray' : 'gray',
-        
+        borderWidth: 0,
+        hoverBackgroundColor: isDarkMode ? 'white' : 'darkgray',
+        borderRadius: 2,
+
       },
     ],
   };
 
   const options = {
     responsive: true,
+    indexAxis: 'y',
     scales: {
       x: {
-          stacked: false,
-          ticks: {
-            color: isDarkMode ? 'white' : 'black',
-           
-          }
+        display: false,
+        stacked: false,
+        ticks: {
+          color: isDarkMode ? 'white' : 'black',
+
+        },
+        grid: {
+          display: false,
+          drawTicks: true,
+        },
+        border: {
+        },
       },
       y: {
-          stacked: false,  
-          ticks: {
-            color: isDarkMode ? 'white' : 'black',
-          }
+        stacked: false,
+        ticks: {
+          color: isDarkMode ? 'white' : '#41b19f',
+          font: {
+            size: 14,
+            weight: 'normal',
+          },
+      },
+        grid: {
+          display: false,
+        },
+        border: {
+        },
       },
     },
     plugins: {
       legend: {
         position: 'bottom',
         labels: {
-          color: isDarkMode ? 'white' : 'black'
-          
+          color: isDarkMode ? 'white' : 'black',
+          font: {
+            weight: 'bold',
+          }
+
         },
         display: false,
       },
@@ -72,7 +95,7 @@ const ClientSideChart = ({ tagCounts, sortedTags }) => {
     },
   };
 
-  return <div className='mt-5' style={{ maxWidth: '500px', maxHeight: '500px'}} >
+  return <div className='chart-container pt-10' style={{ height: '420px', width: '420px' }}>
     <Bar data={pieData} options={options} />
   </div>;
 };
