@@ -278,6 +278,9 @@ OPTIONS (
 
 If any issues with the table schema exist, they will rear their head in the subsequent queries. I had spent a few hours strugling with this personally as I was loading in the taxi data via the DTC provided CSV files and it was producing mismatching schema, which caused simply querying the external table to fail. What I mean by mismatching schema is that one table `yellow_tripdata_2020-01` would have a `VendorID` datatype of `INTEGER` while another table `yellow_tripdata_2020-02` would have a `VendorID` data type of `FLOAT`. An alternative solution would be to expeclicity define the data types in our data load block, similair to what was done in the week 2 module covering workflow orchestration with Mage. I ultimately went straight to the source and found the parquet files there to have a uniform schema, so I'm sharing what worked for me.
 
+**Important:** be sure you disable the `query caching` feature prior to running your queries below. The reason this is it will prevent us from highlighting the differences in query performance when using partitioning, clustering, etc. and is additionaly important for completing the Homework for this module. If query caching is enabled, this will produce results that do not align with the homework answers, so be sure to disable this feature. Lastly, I recommend if you are still getting results that don't
+match a particular homework question's listed solutions to refresh your web page and try again. This should save you some trouble.
+
 ```sql
 -- Check yellow trip data
 SELECT * FROM dtc-de-zoomcamp-410523.ny_taxi.external_yellow_tripdata;
