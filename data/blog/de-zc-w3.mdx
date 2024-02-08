@@ -18,9 +18,9 @@ near future:
 - **Data Mart**: This is a section of our library, except it is dedicated to a particular subject. 
 - **Data Lakehouse**: This is a blend of a DW and a DL, where we get the organized shelves of a DW and the vast storage of a DL in one place.
 
-Now there is surely more to it than that, but I think it's best we try to understand things simply prior to getting into the nitty gritty, which for the purpose of this blog post, I have no desire to do. 
+Now this is only the tip of the iceburg, but I think it's best we try to understand things simply prior to getting into the finer details, which for the purpose of this blog post, is not my aim. 
 What I do want to discuss is my experience with Week 3 of the Data Talks Club Data Engineering Zoomcamp, in which we utilize Google's cloud-based Data Warehouse, `BigQuery`, to create a `Machine Learning` model allowing us to predict
-tip amounts for theoretical taxi rides. Not only that, but we also covered query optimization with BigQuery using two concepts known as `partitioning` and `clustering`.
+tip amounts for theoretical taxi rides. Not only that, but we also implemented query optimization with BigQuery using two concepts known as `partitioning` and `clustering`.
 
 
 - [Exporting Taxi Data into Google Cloud Storage](#exporting-taxi-data-into-google-cloud-storage)
@@ -30,6 +30,7 @@ tip amounts for theoretical taxi rides. Not only that, but we also covered query
   - [Python Ingestion Script (Optional)](#python-ingestion-script-optional)
 - [Google Big Query](#google-big-query)
   - [Creating an External Table](#creating-an-external-table)
+    - [Potential Issues](#potential-issues)
   - [Partitioning and Clustering](#partitioning-and-clustering)
   - [Machine Learning Model](#machine-learning-model)
 
@@ -201,12 +202,9 @@ import pandas as pd
 import pyarrow.parquet as pq
 from google.cloud import storage
 
-# services = ['fhv','green','yellow']
-init_url = 'https://github.com/DataTalksClub/nyc-tlc-data/releases/download/'
 # switch out the bucketname
 BUCKET = os.environ.get("GCP_GCS_BUCKET", "dtc-data-lake-bucketname")
 print(BUCKET)
-
 
 def upload_to_gcs(bucket, object_name, local_file):
     """
@@ -264,6 +262,8 @@ python web_to_gcs.py
 
 # Google Big Query
 
+Big Query is a cloud-based Data Warehouse.
+
 ## Creating an External Table
 
 Depending on whether you leveraged Mage to ingest the data or my custom python script will ultimately dictate which `uri` you set for our external table in BigQuery. This is a pivotal step in our module as essentially every 
@@ -279,8 +279,8 @@ OPTIONS (
   'gs://mage-zoomcamp-bucket/yellow/yellow_tripdata_2020.parquet']
 );
 ```
-
-If any issues with the table schema exist, they will rear their head in the subsequent queries. I had spent a bit of time struggling with loading in the taxi data via the DTC provided CSV files and it was producing mismatching schema, which caused any queries against the newly created external table to fail. What I mean by mismatching schema is that one table `yellow_tripdata_2020-01` would have a `VendorID` datatype of `INTEGER` while another table `yellow_tripdata_2020-02` would have a `VendorID` data type of `FLOAT`. An alternative solution would be to explicity define the data types in our data loader block, similair to what was done in the week 2 module covering workflow orchestration with Mage. I ultimately went straight to the [source](https://www1.nyc.gov/site/tlc/about/tlc-trip-record-data.page) and found the parquet files there to have a uniform schema, so I'm sharing what worked for me.
+### Potential Issues
+If any issues with the table schema exist, they will rear their head in the subsequent queries. I had spent a bit of time struggling with this as the DTC provided CSV files were producing mismatching schema, which caused any queries against the newly created external table to fail. What I mean by mismatching schema is that one table `yellow_tripdata_2020-01` would have a `VendorID` datatype of `INTEGER` while another table `yellow_tripdata_2020-02` would have a `VendorID` data type of `FLOAT`. An alternative solution would be to explicity define the data types in our data loader block, similair to what was done in the week 2 module covering workflow orchestration with Mage. I ultimately went straight to the [source](https://www1.nyc.gov/site/tlc/about/tlc-trip-record-data.page) and found the parquet files there to have a uniform schema, so I'm sharing what worked for me.
 
 **Important:** be sure to disable the `query caching` feature in BigQuery prior to running the SQL below. It will prevent us from highlighting the differences in query performance when using partitioning, clustering, etc. and is additionaly important for completing the Homework for this module. If query caching is enabled, this will produce results (execution details) that do not align with the homework answers, so be sure to disable this feature. Lastly, I recommend if you are still getting results that don't
 align with a particular homework solution to refresh your web page and try again. This should save you some trouble.
