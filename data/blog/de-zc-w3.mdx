@@ -1,7 +1,7 @@
 ---
 title: Data Engineering Zoomcamp, Week 3
 date: '2024-02-07'
-tags: ['Guide', 'BigQuery', 'Mage', 'Python', 'GCP','ETL']
+tags: ['Guide', 'BigQuery', 'Mage', 'Python', 'GCP','ML']
 draft: true
 summary: Detailed insights from Week 2 of the Data Engineering Zoomcamp. Covering workflow orchestration with Mage, specifically using Python and PostgreSQL.
 ---
@@ -22,7 +22,16 @@ Now there is surely more to it than that, but I think it's best we try to unders
 What I do want to discuss is my experience with Week 3 of the Data Talks Club Data Engineering Zoomcamp, in which we utilize Google's cloud-based Data Warehouse, BigQuery, to create a Machine Learning model allowing us to predict
 tip amounts for theoretical taxi rides. Not only that, but we also covered query optimization with BigQuery using two concenpts none as partitioning and clustering.
 
-# Exporting NY Taxi Data into our Google Cloud Bucket
+
+- [Exporting Taxi Data into Google Cloud Storage](#exporting-taxi-data-into-google-cloud-storage)
+  - [Mage Pipeline](#mage-pipeline)
+    - [Data Loader](#data-loader)
+    - [Exporter](#exporter)
+  - [Python Ingestion Script (Optional)](#python-ingestion-script-optional)
+- [Google Big Query](#google-big-query)
+
+
+# Exporting Taxi Data into Google Cloud Storage
 
 In the previous Week 2 Module, we used Mage (a data orchestration framework) to extract, transform and load our data into PostgreSQL as well as Google BigQuery.
 This week, we will further capitalize on the knowledge we've built to export *all* of the necessary data for this module into a Google Cloud Bucket.
@@ -34,6 +43,26 @@ The goal is to ingest Yellow Taxi Data for the years 2019 and 2020, which are us
 the 2022 Green Taxi Data, which is necessary to complete the Week 3 Homework assignment.
 
 ## Mage Pipeline
+
+In the pipeline below, we utilize a handful of python libraries to load our data. These include `pandas`, `pyarrow`, `requests`, and the `io` library.
+We are using `pyarrow.parquet` to read the parquet files from the web source. The `requests` library allows us to fetch data from the actual url, while the `io` library 
+allows us to create a file-like binary stream from the request content, essentially turning the raw bytes into an object similair to a file, which can be
+read or written to, without actually having to write the data to a disk.
+
+The for loop essentially iterates through the URLs provided on the NY Taxi website, fetching each parquet file and merging them into 
+one single pandas dataframe to be used in our Export block.
+
+**Important**: *to set the `service` (green, yellow) and the `year` (2019, 2020, 2021, etc.) of the data we are wanting to fetch, we will utilize
+global variables, will be passed into all blocks as keyword arguments, which can be accessed via `kwargs['name_of_variable']` in our python blocks. 
+This allows us to define the variables in a single placeso we do not have to update their values in each block between pipeline runs.*
+
+You can set global variables in Mage by navigating to the variables pane while viewing your pipeline:
+
+<ToggleGif gifSrc='/static/images/de-zc/w3/mage-global-variables.gif' staticSrc='/static/images/de-zc/w3/mage-global-variables-thumbnail.png' alt='Mage Global Variables'/>
+
+For the sake of simplicity, I designed the pipeline to only load one service and one year at a time, so in order to get multiple years & services, you will need to run this
+pipeline multiple times. As I mentioned earlier, you will need to load the green taxi data for 2022 to complete the homework and the yellow taxi data for 2019 & 2020 if you
+would like to follow along with the module videos.
 
 ### Data Loader
 
@@ -128,9 +157,10 @@ def export_data_to_google_cloud_storage(df: DataFrame, **kwargs) -> None:
     )
 ```
 
+
 ## Python Ingestion Script (Optional)
 For the script below, I modified `web_to_gcs.py`, which you can find in the original DTC DE Zoomcamp repo under `03-data-warehouse\extras\web_to_gcs.py` that I happened to stumble across, 
-although I'm not sure how many people actually used this solution. I found it needed some tweaking in order to not cause issues with mismatching schema down the line in BQ.
+although I'm not sure how many people actually utilized this. I found it needed some tweaking in order to not cause issues with mismatching schema down the line in BQ.
 
 There are a few steps involved we must complete prior to running our script:
 
@@ -230,3 +260,4 @@ Make sure you are in the directory where you saved the script prior to running t
 python web_to_gcs.py
 ```
 
+# Google Big Query
