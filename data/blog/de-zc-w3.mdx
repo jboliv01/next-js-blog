@@ -262,9 +262,23 @@ python web_to_gcs.py
 
 # Google Big Query
 
-Big Query is a cloud-based Data Warehouse.
+Big Query is a cloud-based Data Warehouse that Google describes as a `fully managed, petabyte-scale, and cost-effective analytics data warehouse that lets you run analytics over vast amounts of data in near real time. With BigQuery, there's no infrastructure to set up or manage, letting you focus on finding meaningful insights using GoogleSQL and taking advantage of flexible pricing models across on-demand and flat-rate options.`
+
+BigQuery is often described as serverless, which really just means for us the end user, there are no servers in which we must manage. 
+
+In regards to pricing, BigQuery has two main components:
+    - Compute pricing: cost to process queries, including SQL queries, ML queries, etc.
+    - Storage pricing: cost of storing data in BigQuery
+
+By default, queries are billed using an on-demand pricing model (per Terabyte), where the you only pay for the data scanned by your queries. The first TiB per month is free, while any additional TiB thereafter is priced at $6.25 as of this writing.
+
+In the Week 3 module, we covered Partioning & Clustering which help us to optimize our SQL queries and ultimately, reduce our compute cost, which is something every data engineer should be concerned with when constructing our pipelines, data models, etc.
+
+For more on pricing, refer to google's documentation [here](https://cloud.google.com/bigquery/pricing).
 
 ## Creating an External Table
+
+An External Table is a table that is created using a data source that is not stored in BigQuery storage. For our purposes, we will be creating an External Table using the Taxi data we ingested earlier into our Google Cloud Storage bucket. There are other external data sources you can also utilize, such such as a google cloud database or a different cloud product altogether.
 
 Depending on whether you leveraged Mage to ingest the data or my custom python script will ultimately dictate which `uri` you set for our external table in BigQuery. This is a pivotal step in our module as essentially every 
 query after we define our external table is dependent upon it's creation and a uniform table schema. You can fetch the `uri`, which in this case is a google storage specific url pointing us to our data. For example, the parquet file
