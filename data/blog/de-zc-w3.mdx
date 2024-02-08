@@ -303,11 +303,13 @@ align with a particular homework solution to refresh your web page and try again
 
 Partitioning and clustering are two methods of improving performance of our data warehouse queries.
 
-ref: https://cloud.google.com/bigquery/docs/partitioned-tables
+For more on partitioned tables, refer to google's documentation [here](https://cloud.google.com/bigquery/docs/partitioned-tables).
+
+The following queries aim to highlight the benefits of partitioning and clustering:
 
 ```sql
 -- Check yellow trip data
-SELECT * FROM dtc-de-zoomcamp-410523.ny_taxi.external_yellow_tripdata;
+SELECT * FROM `dtc-de-zoomcamp-410523.ny_taxi.external_yellow_tripdata`;
 
 -- Create a non partitioned table from external table
 CREATE OR REPLACE TABLE `dtc-de-zoomcamp-12345.ny_taxi.yellow_tripdata_non_partitoned` 
