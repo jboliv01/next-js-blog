@@ -52,9 +52,8 @@ read or written to, without actually having to write the data to a disk.
 The for loop essentially iterates through the URLs provided on the NY Taxi website, fetching each parquet file and merging them into 
 one single pandas dataframe to be used in our Export block.
 
-**Important**: *to set the `service` (green, yellow) and the `year` (2019, 2020, 2021, etc.) of the data we are wanting to fetch, we will utilize
-global variables, will be passed into all blocks as keyword arguments, which can be accessed via `kwargs['name_of_variable']` in our python blocks. 
-This allows us to define the variables in a single placeso we do not have to update their values in each block between pipeline runs.*
+**Important**: *to set the `service` (green or yellow) and the `year` (2019, 2020, 2021, etc.) of the data we are wanting to fetch, we will utilize
+global variables, which are passed into all blocks via keyword arguments (kwargs) and can accessed in a python block with the following line of code `var = kwargs['name_of_variable']`. This allows us to define the variables in a single place so we do not have to update their values in each block between pipeline runs.*
 
 You can set global variables in Mage by navigating to the variables pane while viewing your pipeline:
 
