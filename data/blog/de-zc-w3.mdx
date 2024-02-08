@@ -1,7 +1,7 @@
 ---
 title: Data Engineering Zoomcamp, Week 3
 date: '2024-02-07'
-tags: ['Guide', 'BigQuery', 'Mage', 'Python', 'GCP','ML']
+tags: ['Guide', 'BigQuery', 'SQL', 'Mage', 'Python', 'GCP','ML']
 draft: true
 summary: Detailed insights from Week 2 of the Data Engineering Zoomcamp. Covering workflow orchestration with Mage, specifically using Python and PostgreSQL.
 ---
@@ -29,6 +29,9 @@ tip amounts for theoretical taxi rides. Not only that, but we also covered query
     - [Exporter](#exporter)
   - [Python Ingestion Script (Optional)](#python-ingestion-script-optional)
 - [Google Big Query](#google-big-query)
+  - [Creating an External Table](#creating-an-external-table)
+  - [Partitioning and Clustering](#partitioning-and-clustering)
+  - [Machine Learning Model](#machine-learning-model)
 
 
 # Exporting Taxi Data into Google Cloud Storage
@@ -146,7 +149,7 @@ def export_data_to_google_cloud_storage(df: DataFrame, **kwargs) -> None:
 
     print(df.dtypes)
 
-    bucket_name = 'mage-zoomcamp-jonah-oliver'
+    bucket_name = 'mage-zoomcamp-bucket'
     object_key = f'{service}/{service}_tripdata_{year}.parquet'
 
     GoogleCloudStorage.with_config(ConfigFileLoader(config_path, config_profile)).export(
@@ -261,49 +264,56 @@ python web_to_gcs.py
 
 # Google Big Query
 
+## Creating an External Table
+
 Depending on whether you leveraged Mage to ingest the data or my custom python script will ultimately dictate which `uri` you set for our external table in BigQuery. This is a pivotal step in our module as essentially every 
 query after we define our external table is dependent upon it's creation and a uniform table schema. You can fetch the `uri`, which in this case is a google storage specific url pointing us to our data. For example, the parquet file
 I ingested into GCS using Mage would be: `gs://mage-zoomcamp-jonah-oliver/yellow/yellow_tripdata_2019.parquet`. You can list multiple files using square brackets with a comma as a delimter, as shown below.
 
 ```sql
 -- Creating external table referring to gcs path
-CREATE OR REPLACE EXTERNAL TABLE `dtc-de-zoomcamp-410523.ny_taxi.external_yellow_tripdata`
+CREATE OR REPLACE EXTERNAL TABLE `dtc-de-zoomcamp-12345.ny_taxi.external_yellow_tripdata`
 OPTIONS (
   format = 'parquet',
-  uris = ['gs://mage-zoomcamp-jonah-oliver/yellow/yellow_tripdata_2019.parquet',
-  'gs://mage-zoomcamp-jonah-oliver/yellow/yellow_tripdata_2020.parquet']
+  uris = ['gs://mage-zoomcamp-bucket/yellow/yellow_tripdata_2019.parquet',
+  'gs://mage-zoomcamp-bucket/yellow/yellow_tripdata_2020.parquet']
 );
-
 ```
 
-If any issues with the table schema exist, they will rear their head in the subsequent queries. I had spent a few hours strugling with this personally as I was loading in the taxi data via the DTC provided CSV files and it was producing mismatching schema, which caused simply querying the external table to fail. What I mean by mismatching schema is that one table `yellow_tripdata_2020-01` would have a `VendorID` datatype of `INTEGER` while another table `yellow_tripdata_2020-02` would have a `VendorID` data type of `FLOAT`. An alternative solution would be to expeclicity define the data types in our data load block, similair to what was done in the week 2 module covering workflow orchestration with Mage. I ultimately went straight to the source and found the parquet files there to have a uniform schema, so I'm sharing what worked for me.
+If any issues with the table schema exist, they will rear their head in the subsequent queries. I had spent a bit of time struggling with loading in the taxi data via the DTC provided CSV files and it was producing mismatching schema, which caused any queries against the newly created external table to fail. What I mean by mismatching schema is that one table `yellow_tripdata_2020-01` would have a `VendorID` datatype of `INTEGER` while another table `yellow_tripdata_2020-02` would have a `VendorID` data type of `FLOAT`. An alternative solution would be to explicity define the data types in our data loader block, similair to what was done in the week 2 module covering workflow orchestration with Mage. I ultimately went straight to the [source](https://www1.nyc.gov/site/tlc/about/tlc-trip-record-data.page) and found the parquet files there to have a uniform schema, so I'm sharing what worked for me.
 
-**Important:** be sure you disable the `query caching` feature prior to running your queries below. The reason this is it will prevent us from highlighting the differences in query performance when using partitioning, clustering, etc. and is additionaly important for completing the Homework for this module. If query caching is enabled, this will produce results that do not align with the homework answers, so be sure to disable this feature. Lastly, I recommend if you are still getting results that don't
-match a particular homework question's listed solutions to refresh your web page and try again. This should save you some trouble.
+**Important:** be sure to disable the `query caching` feature in BigQuery prior to running the SQL below. It will prevent us from highlighting the differences in query performance when using partitioning, clustering, etc. and is additionaly important for completing the Homework for this module. If query caching is enabled, this will produce results (execution details) that do not align with the homework answers, so be sure to disable this feature. Lastly, I recommend if you are still getting results that don't
+align with a particular homework solution to refresh your web page and try again. This should save you some trouble.
+
+## Partitioning and Clustering
+
+Partitioning and clustering are two methods of improving performance of our data warehouse queries.
+
+ref: https://cloud.google.com/bigquery/docs/partitioned-tables
 
 ```sql
 -- Check yellow trip data
 SELECT * FROM dtc-de-zoomcamp-410523.ny_taxi.external_yellow_tripdata;
 
 -- Create a non partitioned table from external table
-CREATE OR REPLACE TABLE `dtc-de-zoomcamp-410523.ny_taxi.yellow_tripdata_non_partitoned` 
-AS SELECT * FROM `dtc-de-zoomcamp-410523.ny_taxi.external_yellow_tripdata`;
+CREATE OR REPLACE TABLE `dtc-de-zoomcamp-12345.ny_taxi.yellow_tripdata_non_partitoned` 
+AS SELECT * FROM `dtc-de-zoomcamp-12345.ny_taxi.external_yellow_tripdata`;
 
 -- Create a partitioned table from external table
-CREATE OR REPLACE TABLE `dtc-de-zoomcamp-410523.ny_taxi.yellow_tripdata_partitoned` 
+CREATE OR REPLACE TABLE `dtc-de-zoomcamp-12345.ny_taxi.yellow_tripdata_partitoned` 
 PARTITION BY
   DATE(tpep_pickup_datetime) AS
-SELECT * FROM `dtc-de-zoomcamp-410523.ny_taxi.external_yellow_tripdata`;
+SELECT * FROM `dtc-de-zoomcamp-12345.ny_taxi.external_yellow_tripdata`;
 
 -- Impact of partition
 -- Scanning 1.6GB of data
 SELECT DISTINCT(VendorID)
-FROM `dtc-de-zoomcamp-410523.ny_taxi.yellow_tripdata_non_partitoned`
+FROM `dtc-de-zoomcamp-12345.ny_taxi.yellow_tripdata_non_partitoned`
 WHERE DATE(tpep_pickup_datetime) BETWEEN '2019-06-01' AND '2019-06-30';
 
 -- Scanning ~106 MB of DATA
 SELECT DISTINCT(VendorID)
-FROM `dtc-de-zoomcamp-410523.ny_taxi.yellow_tripdata_partitoned` 
+FROM `dtc-de-zoomcamp-12345.ny_taxi.yellow_tripdata_partitoned` 
 WHERE DATE(tpep_pickup_datetime) BETWEEN '2019-06-01' AND '2019-06-30';
 
 -- Let's look into the partitons
@@ -313,20 +323,22 @@ WHERE table_name = 'yellow_tripdata_partitoned'
 ORDER BY total_rows DESC;
 
 -- Creating a partition and cluster table
-CREATE OR REPLACE TABLE `dtc-de-zoomcamp-410523.ny_taxi.yellow_tripdata_partitoned_clustered`
+CREATE OR REPLACE TABLE `dtc-de-zoomcamp-12345.ny_taxi.yellow_tripdata_partitoned_clustered`
 PARTITION BY DATE(tpep_pickup_datetime)
 CLUSTER BY VendorID AS
-SELECT * FROM `dtc-de-zoomcamp-410523.ny_taxi.external_yellow_tripdata`;
+SELECT * FROM `dtc-de-zoomcamp-12345.ny_taxi.external_yellow_tripdata`;
 
 -- Query scans 1.1 GB
 SELECT count(*) as trips
-FROM `dtc-de-zoomcamp-410523.ny_taxi.yellow_tripdata_partitoned` 
+FROM `dtc-de-zoomcamp-12345.ny_taxi.yellow_tripdata_partitoned` 
 WHERE DATE(tpep_pickup_datetime) BETWEEN '2019-06-01' AND '2020-12-31'
   AND VendorID=1;
 
 -- Query scans 864.5 MB
 SELECT count(*) as trips
-FROM `dtc-de-zoomcamp-410523.ny_taxi.yellow_tripdata_partitoned_clustered`
+FROM `dtc-de-zoomcamp-12345.ny_taxi.yellow_tripdata_partitoned_clustered`
 WHERE DATE(tpep_pickup_datetime) BETWEEN '2019-06-01' AND '2020-12-31'
   AND VendorID=1;
 ```
+
+## Machine Learning Model
