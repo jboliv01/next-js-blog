@@ -35,10 +35,98 @@ the 2022 Green Taxi Data, which is necessary to complete the Week 3 Homework ass
 
 ## Mage Pipeline
 
-
 ### Data Loader
-### Transformer
-### Loader
+
+```python
+import io
+import pandas as pd
+import requests
+import pyarrow as pa
+import pyarrow.parquet as pq
+if 'data_loader' not in globals():
+    from mage_ai.data_preparation.decorators import data_loader
+if 'test' not in globals():
+    from mage_ai.data_preparation.decorators import test
+
+
+@data_loader
+def load_data_from_api(*args, **kwargs):
+    """
+    Template for loading data from API
+    """
+    service = kwargs['service']
+    year = kwargs['year']
+    print(f'loading {service} taxi data for the year {year}\n')
+
+    data_frames = []
+
+    for i in range(12):
+        month = f"{i+1:02d}"
+        file_name = f"{service}_tripdata_{year}-{month}.parquet"
+        request_url = f'https://d37ci6vzurychx.cloudfront.net/trip-data/{file_name}'
+        print(f'request url: {request_url}')
+        try:
+            response = requests.get(request_url)
+            response.raise_for_status()  # Raises HTTPError for bad requests
+            data = io.BytesIO(response.content)
+            df = pq.read_table(data).to_pandas()
+            data_frames.append(df)
+            print(f"Parquet loaded: {file_name}")
+        except requests.HTTPError as e:
+            print(f"HTTP Error: {e}")
+            # Optionally, handle the error (e.g., by breaking the loop or re-trying)
+
+    # Concatenate all dataframes
+    combined_df = pd.concat(data_frames, ignore_index=True)
+    return combined_df
+
+
+@test
+def test_output(output, *args) -> None:
+    """
+    Template code for testing the output of the block.
+    """
+    assert output is not None, 'The output is undefined'
+```
+
+### Exporter
+
+```python
+from mage_ai.settings.repo import get_repo_path
+from mage_ai.io.config import ConfigFileLoader
+from mage_ai.io.google_cloud_storage import GoogleCloudStorage
+from pandas import DataFrame
+from os import path
+
+if 'data_exporter' not in globals():
+    from mage_ai.data_preparation.decorators import data_exporter
+
+
+@data_exporter
+def export_data_to_google_cloud_storage(df: DataFrame, **kwargs) -> None:
+    """
+    Template for exporting data to a Google Cloud Storage bucket.
+    Specify your configuration settings in 'io_config.yaml'.
+
+    Docs: https://docs.mage.ai/design/data-loading#googlecloudstorage
+    """
+    config_path = path.join(get_repo_path(), 'io_config.yaml')
+    config_profile = 'default'
+
+    service = kwargs['service']
+    year = kwargs['year']
+
+    print(df.dtypes)
+
+    bucket_name = 'mage-zoomcamp-jonah-oliver'
+    object_key = f'{service}/{service}_tripdata_{year}.parquet'
+
+    GoogleCloudStorage.with_config(ConfigFileLoader(config_path, config_profile)).export(
+        df,
+        bucket_name,
+        object_key,
+    )
+```
 
 ## Python Ingestion Script (Optional)
 For the script below, I modified `web_to_gcs.py`, which you can find in the original DTC DE Zoomcamp repo under `03-data-warehouse\extras\web_to_gcs.py` that I happened to stumble across, 
@@ -57,6 +145,20 @@ Set GOOGLE_APPLICATION_CREDENTIALS='C:\downloads\dtc-de-zoomcamp-12345-123a456b7
 3. Set GCP_GCS_BUCKET as your bucket or change default value of BUCKET
 ```shell
 Set GCP_GCS_BUCKET='your-zoomcamp-bucket-name'
+```
+
+Since I'm using Git Bash, I alternatively created a `secrets.sh` file, which is similair to `.env`, in order to reference the
+environmental variables prior to executing our script.
+
+```shell
+export GOOGLE_APPLICATION_CREDENTIALS='C:\downloads\dtc-de-zoomcamp-12345-123a456b789c.json'
+export GCP_GCS_BUCKET='your-zoomcamp-bucket-name'
+```
+
+After creating in saving the `secrets.sh` file defined above, run the command below in your terminal prior to running our script.
+
+```shell
+source secrets.sh
 ```
 
 ```python
@@ -126,3 +228,5 @@ Make sure you are in the directory where you saved the script prior to running t
 
 ```shell
 python web_to_gcs.py
+```
+
