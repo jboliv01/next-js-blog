@@ -10,22 +10,22 @@ summary: Detailed insights from Week 3 of the Data Engineering Zoomcamp. Coverin
 Data Warehouse, Data Lake, Data Mart, Data Lakehouse.. the list goes on. if your anything like me, you may be 
 frequently questioning the differences and distinctions between these architectures. In fact, I've noticed
 there is a common theme as I'm learning more and more about Data Engineering that there isn't generally a consensus on definitions, for better or worse. So I'll try my best 
-to describe these things at a high level, before I ultimately looking up their definitions once again in the
+to describe these things at a high level, before ultimately looking up their definitions once again in the
 near future:
 
 - **Data Warehouse**: Think of this like a neatly organized library where books are arranged and cataloged.
   - Google: BigQuery
   - Amazon: Redshift
-  - Azure: Azure SQL DAta Warehouse
-- **Data Lake**: A huge storage room, where books are in boxes and you must dig through to find what you want.
+  - Azure: Azure SQL Data Warehouse
+- **Data Lake**: A huge storage room, where books are in boxes and you must dig through to find what you want. Also referred to as object storage.
   - Google: Google Cloud Storage
   - Amazon: S3 (Simple Storage Service)
   - Azure: Azure Data Lake Storage
 - **Data Mart**: This is a section of our library, except it is dedicated to a particular subject. 
 - **Data Lakehouse**: This is a blend of a DW and a DL, where we get the organized shelves of a DW and the vast storage of a DL in one place.
 
-Now this is only the tip of the iceburg, but I think it's best we try to understand things simply prior to getting into the finer details, which for the purpose of this blog post, is not my aim. 
-What I do want to discuss is my experience with Week 3 of the Data Talks Club Data Engineering Zoomcamp, in which we utilize Google's cloud-based Data Warehouse, `BigQuery`, to create a `Machine Learning` model allowing us to predict
+These are only the tip of the iceburg, but I think it's best we try to understand things simply prior to getting into the finer details, which for the purpose of this blog post, is not my aim. 
+In today's post, we'll be discussing Week 3 of the Data Talks Club Data Engineering Zoomcamp, in which we utilize Google's cloud-based Data Warehouse, `BigQuery`, to create a `Machine Learning` model allowing us to predict
 tip amounts for theoretical taxi rides. Not only that, but we also implemented query optimization with BigQuery using two concepts known as `partitioning` and `clustering`.
 
 
@@ -364,6 +364,8 @@ WHERE DATE(tpep_pickup_datetime) BETWEEN '2019-06-01' AND '2020-12-31'
 ```
 
 ## Machine Learning Model
+
+Data science and machine learning are crucial areas where data engineers should possess foundational knowledge. As engineers, we often play a pivotal role in provisioning high-quality datasets that data scientists rely on for building and optimizing their models. Week 3 of our course served as a valuable reminder of the importance of these skills. This section highlighted the implementation of a linear regression model, using our NY Taxi data, all within BigQuery. To deepen my understanding, I plan to revisit Andrew Ng's course on Machine Learning available on [Coursera](https://www.coursera.org/specializations/machine-learning-introduction#courses). This course covers essential topics like Linear and Logistic Regression, Gradient Descent, Overfitting, as well as Supervised and Unsupervised Learning, providing a solid foundation for anyone interested in the field. 
 
 
 ```sql
