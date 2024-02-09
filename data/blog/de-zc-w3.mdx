@@ -1,32 +1,19 @@
 ---
-title: Data Engineering Zoomcamp, Week 3
-date: '2024-02-07'
-tags: ['Guide', 'BigQuery', 'SQL', 'Mage', 'Python', 'GCP','ML']
-draft: true
-summary: Detailed insights from Week 3 of the Data Engineering Zoomcamp. Covering Data Warehouses, Partitioning and Clustering and Machine Learning.
+title: 'Data Engineering Zoomcamp, Week 3: BigQuery, Data Warehouses, and Machine Learning'
+date: '2024-02-09'
+tags: ['Guide', 'BigQuery', 'SQL', 'Python', 'GCP','Machine Learning', 'Data Engineering']
+draft: false
+summary: Explore key takeaways from Week 3 of the Data Engineering Zoomcamp, focusing on Google's BigQuery, data warehousing concepts, and practical machine learning implementations including partitioning, clustering, and predictive modeling.
 ---
 
+In the ever-evolving world of data management, terms like Data Warehouse, Data Lake, Data Mart, and Data Lakehouse are frequently mentioned. If you're anything like me, you might find yourself pondering the subtle differences and distinctions between these architectures. As I delve deeper into the realm of Data Engineering, I've realized that these definitions often lack consensus, varying slightly from one context to another. Nevertheless, I'll do my best to describe them at a high level:
 
-Data Warehouse, Data Lake, Data Mart, Data Lakehouse.. the list goes on. if your anything like me, you may be 
-frequently questioning the differences and distinctions between these architectures. In fact, I've noticed
-there is a common theme as I'm learning more and more about Data Engineering that there isn't generally a consensus on definitions, for better or worse. So I'll try my best 
-to describe these things at a high level, before ultimately looking up their definitions once again in the
-near future:
+- **Data Warehouse**: Picture a neatly organized library with well-cataloged books. Examples include Google's BigQuery, Amazon's Redshift, and Azure's SQL Data Warehouse.
+- **Data Lake**: Imagine a vast storage room with books in boxes, requiring some digging to find what you need, akin to object storage. Example services include Google's Cloud Storage, Amazon's S3 (Simple Storage Service), and Azure Data Lake Storage.
+- **Data Mart**: Think of it as a specialized section of a library dedicated to a specific subject.
+- **Data Lakehouse**: A hybrid that combines the structured organization of a Data Warehouse with the expansive storage of a Data Lake.
 
-- **Data Warehouse**: Think of this like a neatly organized library where books are arranged and cataloged.
-  - Google: BigQuery
-  - Amazon: Redshift
-  - Azure: Azure SQL Data Warehouse
-- **Data Lake**: A huge storage room, where books are in boxes and you must dig through to find what you want. Also referred to as object storage.
-  - Google: Google Cloud Storage
-  - Amazon: S3 (Simple Storage Service)
-  - Azure: Azure Data Lake Storage
-- **Data Mart**: This is a section of our library, except it is dedicated to a particular subject. 
-- **Data Lakehouse**: This is a blend of a DW and a DL, where we get the organized shelves of a DW and the vast storage of a DL in one place.
-
-These are only the tip of the iceburg, but I think it's best we try to understand things simply prior to getting into the finer details, which for the purpose of this blog post, is not my aim. 
-In today's post, we'll be discussing Week 3 of the Data Talks Club Data Engineering Zoomcamp, in which we utilize Google's cloud-based Data Warehouse, `BigQuery`, to create a `Machine Learning` model allowing us to predict
-tip amounts for theoretical taxi rides. Not only that, but we also implemented query optimization with BigQuery using two concepts known as `partitioning` and `clustering`.
+While these descriptions only scratch the surface, understanding them in simple terms is a great starting point for this week's module. In today's post, we'll dive into Week 3 of the Data Talks Club Data Engineering Zoomcamp, spotlighting Google's Data Warehouse solutiion, BigQuery. Our primary focus will be on query optimization in BigQuery, where we'll explore techniques like partitioning and clustering to enhance performance. Additionally, we'll discuss how to use Google's cloud-based Data Warehouse, BigQuery, for machine learning applications. Specifically, we'll delve into creating a model designed to predict tip amounts for taxi rides. This hands-on experience will help broaden our understanding of data engineering concepts but also demonstrates the practical applications of these technologies in real-world scenarios.
 
 
 - [Exporting Taxi Data into Google Cloud Storage](#exporting-taxi-data-into-google-cloud-storage)
