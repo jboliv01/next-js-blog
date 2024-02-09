@@ -303,6 +303,7 @@ OPTIONS (
 );
 ```
 ### Potential Issues
+
 If any issues with the table schema exist, they will rear their head in the subsequent queries. I had spent a bit of time struggling with this as the DTC provided CSV files were producing mismatching schema, which caused any queries against the newly created external table to fail. What I mean by mismatching schema is that one table `yellow_tripdata_2020-01` would have a `VendorID` datatype of `INTEGER` while another table `yellow_tripdata_2020-02` would have a `VendorID` data type of `FLOAT`. An alternative solution would be to explicity define the data types in our data loader block, similair to what was done in the week 2 module covering workflow orchestration with Mage. I ultimately went straight to the [source](https://www1.nyc.gov/site/tlc/about/tlc-trip-record-data.page) and found the parquet files there to have a uniform schema, so I'm sharing what worked for me.
 
 **Important:** be sure to disable the `query caching` feature in BigQuery prior to running the SQL below. It will prevent us from highlighting the differences in query performance when using partitioning, clustering, etc. and is additionaly important for completing the Homework for this module. If query caching is enabled, this will produce results (execution details) that do not align with the homework answers, so be sure to disable this feature. Lastly, I recommend if you are still getting results that don't
