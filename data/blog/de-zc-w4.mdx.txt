@@ -1,0 +1,82 @@
+---
+title: 'Data Engineering Zoomcamp, Week 4: Analytics Engineering with dbt '
+date: '2024-02-20'
+tags: ['Guide', 'dbt', 'SQL', 'CI/CD', 'Data Engineering']
+draft: true
+summary: Explore key takeaways from Week 4 of the Data Engineering Zoomcamp
+---
+
+As defined on their [website](https://www.getdbt.com/product/what-is-dbt), dbt™ is a SQL-first 
+transformation workflow that lets teams quickly and collaboratively deploy analytics code following 
+software engineering best practices like modularity, portability, CI/CD, and documentation. 
+Now anyone on the data team can safely contribute to production-grade data pipelines.
+
+enables us to apply software engineering best practices into our SQL code. Contains libraries, similar to python libraries 
+that have pre written macros, similar to python functions.
+
+db_utils library provides us with macros we can reuse in our sql, such as the generate hash key macro. 
+
+show an image of the resulting data model we want to build in dbt here, including fact and dim tables. 
+
+quick description of CI/CD
+
+quick description of DRY (dont repeat yourself) and reusable code
+
+quick note about test suites, similar to how we implemented test assertions in Mage
+
+dbt packages can be added in the packages.yml file, similar to how we added python dependencies for our docker container 
+in the requirements.txt file in module 1.
+
+The dbt-labs/codegen package contains a handful of useful macros that make writing a model more efficient. For example, 
+we can use the `generate_model_yaml` macro to generate the YAML for a list of models we can then paste into our schema.yml file. 
+This saves us time when defining the schema of our tables. https://hub.getdbt.com/dbt-labs/codegen/latest/
+
+```shell
+{% set models_to_generate = codegen.get_models(directory='marts', prefix='fct_') %}
+{{ codegen.generate_model_yaml(
+    model_names = models_to_generate
+) }}
+```
+
+variables can be defined within the dbt_project.yml file for reuse when defining models. i.e. the payment_type_values variable
+is a field that is present in both green and yellow taxi data. 
+
+Defined as follows in `dbt_project.yml`:
+
+```yaml
+vars:
+  payment_type_values: [1, 2, 3, 4, 5]
+```
+
+and later accessed in the `schema.yml` for our project under both the green and yellow taxi models using Jinja:
+
+```yaml
+ - name: payment_type
+        data_type: int64
+        description: ""
+        tests:
+          - accepted_values:
+              values: " {{ var('payment_type_values') }}"
+```
+
+
+The following command will generate documents showing our model dependencies, DAGs, etc.
+
+```shell
+dbt docs generate
+```
+
+run the following command to build the finalized model, which will create a fact_trips table in BigQuery. 
+
+```shell
+dbt build --select +fact_trips+ --vars '{'is_test_run': 'false'}'
+```
+
+
+create a production environment in dbt and schedule a deploy job to run on a specified cadence
+
+on the deploy job, enable `generate docs on run` and `run source freshness`
+
+
+deploying a continious integration job in dbt. A continious integration job will ensure when any new changes 
+are merged into main, a job will automatically be deployed.
