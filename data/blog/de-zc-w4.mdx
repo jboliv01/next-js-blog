@@ -61,12 +61,12 @@ This lead me on a search for a solution to my memory problem, but this is not yo
 all of our taxi data into one dataframe, we can split it into separate blocks that can each be loaded into memory in parallel or even sequentially. 
 
 At first, I ran 4 blocks in parallel (4 data loader blocks), each block represented a parquet file containing taxi data for a specific month (i.e. Jan, Feb, March). At this point I assumed I had cracked the code, but still found my pipleine was failing due to insufficient memmory, once again.
- 
+
 The solution I arrived at was to configure my Data Loader as a dynamic block and to then modify the concurrency of said blocks within the `metadata.yml` file belonging to my pipeline to a value of 1. This enabled my pipeline to run each dynamic block sequentially (1 by 1) until each file was loaded, 
 rather than appending all the files to a single dataframe.
 
 My understanding is that only 1 dynamic child block will run at a time, which will help alleviate potential memory constraints, but will be effectively much slower. Alas, I am beholden to the specifications of my personal computer, in which I've allocated
-8 GBs of memory to docker as well as 4 vCPUs. Were I to configure this mage pipeline to run on a remote container, provisioned with greater memory and compute, I could likely increase the concurrency figure as necessary.
+8 GBs of memory to docker as well as 4 vCPUs. Were I to configure this mage pipeline to run on a remote container, provisioned with greater memory and compute, I could likely increase the concurrency figure as necessary, effectively speeding up my pipeline runtime.
 
 
 ```yaml
