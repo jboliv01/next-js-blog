@@ -48,6 +48,12 @@ module.exports = {
             code: {
               color: theme('colors.indigo.500'),
             },
+            blockquote: {
+              quotes: 'none',
+              '&::before': { content: 'none' },
+              '&::after': { content: 'none' },
+              fontStyle: 'normal',
+            },
           },
         },
         invert: {

@@ -15,10 +15,28 @@ Allowing anyone on the data team to safely contribute to production-grade data p
 enables us to apply software engineering best practices into our SQL code. Contains libraries, similar to python libraries 
 that have pre written macros, similar to python functions.
 
-# Setup
+- [Prerequisites](#prerequisites)
+- [Potential Issues](#potential-issues)
+  - [Insufficient Memory](#insufficient-memory)
+  - [Timestamp Precision](#timestamp-precision)
+  - [Creating and Deploying a **dbt™** Model](#creating-and-deploying-a-dbt-model)
+  - [Setup](#setup)
+    - [Create a project](#create-a-project)
+    - [Link project to Github](#link-project-to-github)
+    - [Link project to Data Warehouse](#link-project-to-data-warehouse)
+  - [Staging Models](#staging-models)
+  - [Core Models](#core-models)
+  - [Model Schema](#model-schema)
+  - [Packages and Macros](#packages-and-macros)
+  - [Project Variables](#project-variables)
+  - [Deployment Jobs (CI/CD)](#deployment-jobs-cicd)
+- [Data Visualization](#data-visualization)
 
-Before we can get into this module, there are a handful of datasets we need. If you haven't done this already, DTC provides a quick hack to perform this which I believe
-should set you on the right path.
+
+# Prerequisites
+
+Before we can get into this module, there are a handful of datasets we need. If you haven't done this already, DTC provides a [quick hack](https://www.youtube.com/watch?v=Mork172sK_c&list=PLaNLNpjZpzwgneiI-Gl8df8GCsPYp_6Bs) to perform this which I believe
+should set you on the right path. Otherwise, I will go into some issues I had while ingesting the data with Mage below and provide an updated solution that I have personally tested on each dataset. If you have all this already setup, feel free to skip ahead.
 
 - 2019 and 2020 Yellow NY Taxi data
 - 2019 and 2020 Green NY Taxi data
@@ -29,11 +47,11 @@ should set you on the right path.
 ## Insufficient Memory
 
 I'll start by saying I was wrong in my [Week 3 post](http://localhost:3000/blog/de-zc-w3#mage-pipeline). More specifically, I designed a Mage pipeline with the purpose of ingesting all 
-of the necessary taxi data. When I initially loaded all of the data into GCS, I used [this](http://localhost:3000/blog/de-zc-w3#python-ingestion-script-optional) local python script and only ***then*** did I explore implementing the Mage pipeline. The issue is I only tested one taxi service
-and one year, which seemingly worked, but on further review, I found a plethora of issues when attempting to ingest the yellow taxi data, etc. My Mage Pipeline was failing because I was loading
-too much data into memory, more than my Docker container was configured to handle. This would cause the pipeline to fail and ultimately I would have to restart the docker container as it would freeze up due to memory constraints.
+of the necessary taxi data for our module. When I initially loaded all of the data into GCS, I used [this](http://localhost:3000/blog/de-zc-w3#python-ingestion-script-optional) local python script and only ***then*** did I explore implementing the Mage pipeline. The issue is I only tested one taxi service
+and one year, which seemingly worked, but on further review, I found a plethora of issues when attempting to ingest the yellow taxi data, etc with Mage. My pipeline was failing because I was loading
+too much data into memory, more than my Docker container was configured to handle. This would cause the pipeline to fail and ultimately I would have to restart the docker container as it would freeze up due to memory constraints, resulting in one big headache.
 
-This lead me on a search for a solution to my memory problems. The first thing I discovered was what Mage calls `dynamic blocks`. Dynamic blocks allow you to split up blocks, such as a data loader, into multiple pieces and run them in parallel. For example, we can take our data loader and rather than concatenating 
+This lead me on a search for a solution to my memory problem, but this is not your grandpas memory problem.  The first thing I discovered was what Mage calls `dynamic blocks`. Dynamic blocks allow you to split up blocks, such as a data loader, into multiple pieces and run them in parallel. For example, we can take our data loader and rather concatenating 
 all of our taxi data into one dataframe, we can split it into separate blocks that can each be loaded into memory in parallel or even sequentially. 
 
 At first, I ran 4 blocks in parallel (4 data loader blocks), each block represented a parquet file containing taxi data for a specific month (i.e. Jan, Feb, March). At this point I assumed I had cracked the code, but still found my pipleine was fail due to insufficient memmory, once again. 
@@ -49,9 +67,17 @@ concurrency_config:
   block_run_limit: 1
 ```
 
+Here is an example of what a Mage pipeline with dynamic blocks looks like. For the sake of simplicity, I only loaded 3 months of Taxi data. The pipeline works as follows, the first data loader block is configured as a "dynamic block". It iterates through a range, in our case 12 to represent each month, then appends each url data to a list of dictionaries that is referenced in our return statement as [download_info]. Next we have a "dynamic child" block. This secondary data loader takes the url for each item in our download_info list and retrieves the csv data for each month, in case of the example below January, February and March and returns each as a separate dataframe labeled "child_0, child_1 and child_2". Lastly, our data exporter takes each child block and exports the dataframe into google cloud storage. This parallelization allows us flexibility in a handful of ways. We can speed up our pipeline by increase the amount of concurrenct blocks we want to run. If we set this figure to 3, all 3 of our data loaders will run in parallel, instead of sequentially. If we set the concurrency value to 1, only one child block will run at a time, effectively reducing the amount of data we are loading into memory at one time. You can contrast this with some of the Mage pipelines we built in the earlier modules, where we loaded all of the csv data into one singular dataframe value. This may work in a pinch, but does not scale well the more data we load in. Particularly the yellow taxi data, which contains the most amount of records was giving me this issue!
+
+![mage-dynamic-blocks-dag](../static/images/de-zc/w4/mage-dynamic-blocks-dag.png)
+
+
 ## Timestamp Precision
 
-In my work with FHV taxi trip data, I encountered a notable issue during data loading. The error message was as follows:
+> I want to first note that this issue can be avoided simply by using the [csv data in the DTC repo](https://github.com/DataTalksClub/nyc-tlc-data/releases/download/fhv/fhv_tripdata_2019-01.csv.gz), but I was curious of the parquet format and wanted to explore that further by going directly to the [source](https://www1.nyc.gov/site/tlc/about/tlc-trip-record-data.page). 
+In hindsight, the following issue was avoidable but regardless I want to share my findings as similar issues are likely to appear if you work in data engineering.
+
+In my work with FHV taxi trip data, I encountered a notable issue while loading the data. My Mage pipleline was breaking due to the following error:
 
 > pyarrow.lib.ArrowInvalid: Casting from timestamp[us] to timestamp[ns] would result in out of bounds timestamp: 33106123800000000 
 
@@ -63,7 +89,7 @@ For instance, our original value of 33,106,123,800,000,000 (in microseconds) bec
 
 To illustrate these out-of-range values, refer to the following table. As a Data Engineer, encountering such erroneous timestamps necessitates a decision on handling. In our bootcamp, I chose to convert out-of-bound timestamps to Pandas' NaT (not-a-time) type, essentially treating them as null values. In real-world scenarios, alternative approaches might be considered.
 
-| Human-Readable Date             | Microsecond Timestamp | Nanosecond Equivalent (Microsecond * 1000) | Within 64-bit Range? |
+| Datetime             | Microsecond Timestamp | Nanosecond Equivalent (Microsecond * 1000) | Within 64-bit Range? |
 |---------------------------------|-----------------------|--------------------------------------------|----------------------|
 | 1970-01-01 00:00:01             | 1,000,000             | 1,000,000,000 (1e9)                        | Yes                  |
 | 2262-04-11 23:47:16             | 9,223,372,036,854     | 9,223,372,036,854,000 (9.22e15)            | Yes                  |
@@ -72,6 +98,154 @@ To illustrate these out-of-range values, refer to the following table. As a Data
 | Out of Bounds                   | 10,000,000,000,000,000| 10,000,000,000,000,000,000 (1e19)          | No                   |
 | Out of Bounds                   | 33,106,123,800,000,000| 33,106,123,800,000,000,000 (3.31e19)       | No                   |
 
+## Creating and Deploying a **dbt™** Model
+
+## Setup
+
+### Create a project
+
+### Link project to Github
+Before we create and deploy our dbt project, we will need to link dbt to our github repository, more specifically a cloned repository containg the Week 4 "04-analytics-engineering" folder. After we link the repository, 
+
+> Note: I recommend using the GitHub connector instead of the Git Clone option, as I later had issues with deploying a CI Job due to using the latter.
+
+<ToggleGif gifSrc='/static/images/de-zc/w4/dbt-project-repository-link.gif' staticSrc='/static/images/de-zc/w4/dbt-project-repository-link-thumbnail.png' alt='Mage Global Variables'/>
+
+Next you will need to set the project subdirectory to the location of of our dbt project, which is within the `taxi_rides_ny` folder.
+![dashboard](../static/images/de-zc/w4/dbt-project-repository.png)
+
+### Link project to Data Warehouse
+Lastly, we need to link our project to our BigQuery Data Warehouse. This is pretty straight forward, as it allows us to import the service account key we generated in the previous module. At this point, you likely already have one downloaded, but see my previous post [here](http://localhost:3000/blog/de-zc-w1-2#download-an-api-key-for-your-service-account) if you need a refresher.
+
+## Staging Models
+Now that our project has been configured with the necessary settings, it's time to open up the dbt IDE and get started. Once the IDE has loaded, one of the first things you may notice is a button prompting us to "Create Branch". It is best practice to create feature branches, which are any changes we want to make to our original code, prior to submitting whats known as a "pull request" that generally has to be reviewed by others to assure there are no breaking changes. Once reviewed, the pull request can then be merged into our main branch. In this case, we own the repository so we have the ability to create a feature branch, update our code, submit a pull request and approve it. 
+
+Under our dbt project taxi_rides_ny, there should be a models folder containing two subfolders: staging and core. The staging model will define the schema of our taxi data as well as some test suites. The core model will contain our fact table, which will ultimately join our green and yellow taxi data together as one table for further analysis.
+
+Under staging, we defined the schema of our tables in `schema.yml`. Dbt then allows us to auto-generate the models for our staging tables, green_tripdata and yellow_tripdata, by clicking "Generate model". 
+
+```yaml
+sources:
+  - name: staging
+    database: taxi-rides-ny-339813-412521
+     # For postgres:
+      #database: production
+    schema: trips_data_all
+
+      # loaded_at_field: record_loaded_at
+    tables:
+      - name: external_green_tripdata
+      - name: external_yellow_tripdata
+      - name: external_fhv_tripdata
+         # freshness:
+           # error_after: {count: 6, period: hour}
+```
+
+For the sake of this blog post, I will share the `external_fhv_tripdata.sql` model I first auto-generated but then later modeled after the green and yellow tripdata models. 
+
+```yaml
+{{ config(materialized="view") }}
+
+with
+    fhv_tripdata as (
+        select *, row_number() over (partition by pulocationid, pickup_datetime) as rn
+        from {{ source("staging", "external_fhv_tripdata") }}
+    )
+
+select
+    {{ dbt_utils.generate_surrogate_key(["pulocationid", "pickup_datetime"]) }}
+    as tripid,
+    {{ dbt.safe_cast("dispatching_base_num", api.Column.translate_type("integer")) }}
+    as dispatching_base_num,
+    cast(pickup_datetime as timestamp) as pickup_datetime,
+    cast(dropoff_datetime as timestamp) as dropoff_datetime,
+    {{ dbt.safe_cast("pulocationid", api.Column.translate_type("integer")) }}
+    as pickup_locationid,
+    {{ dbt.safe_cast("dolocationid", api.Column.translate_type("integer")) }}
+    as dropoff_locationid,
+    sr_flag,
+    affiliated_base_number
+
+from fhv_tripdata
+--where rn = 1
+
+-- dbt build --select <model.sql> --vars '{'is_test_run: false}'
+{% if var("is_test_run", default=true) %} limit 100 {% endif %}
+```
+
+`Compiling` the model will allow us to see the output of the macros we are using.
+
+```yaml
+with
+    fhv_tripdata as (
+        select *, row_number() over (partition by pulocationid, pickup_datetime) as rn
+        from `dtc-de-zoomcamp-12345`.`ny_taxi`.`external_fhv_tripdata`
+    )
+
+select
+    to_hex(md5(cast(coalesce(cast(pulocationid as string), '_dbt_utils_surrogate_key_null_') || '-' || coalesce(cast(pickup_datetime as string), '_dbt_utils_surrogate_key_null_') as string))) as tripid,
+    safe_cast(dispatching_base_num as INT64) as dispatching_base_num,
+    cast(pickup_datetime as timestamp) as pickup_datetime,
+    cast(dropoff_datetime as timestamp) as dropoff_datetime,
+    safe_cast(pulocationid as INT64) as pickup_locationid,
+    safe_cast(dolocationid as INT64) as dropoff_locationid,
+    sr_flag,
+    affiliated_base_number
+    
+from fhv_tripdata
+--where rn = 1
+
+-- dbt build --select <model.sql> --vars '{'is_test_run: false}'
+ limit 100 
+ ```
+
+Running the following dbt command will create the staging table in google bigquery based on the model we have specified.
+
+```shell
+dbt build --select +stg_external_fhv_tripdata+ --vars '{'is_test_run': 'false'}'
+```
+
+## Core Models
+
+Within the `Models` folder, we should have two subfolders, `Core` and `Staging`. With our staging model defined, we now need to create a our finalized `Fact` model. This is where we will perform any necessary joins to our table. We no longer need to worry about the data types in our schema as we have handled that in our staging table model. In the case of our `fact_fhv_trips.sql` model, we are selecting the necessary columns we want in our finalized model and performing two inner-joins to our `dim_zones` model, which has a `where` clause to filter out any zones with a borough type of `unknown`. This was a requirement for one of the homework questions in the week 4 module.
+
+```yaml
+{{
+    config(
+        materialized='table'
+    )
+}}
+
+with external_fhv_tripdata as (
+    select *, 
+    'FHV' as service_type 
+    from {{ ref('stg_external_fhv_tripdata') }}
+),
+dim_zones as (
+    select * from {{ ref('dim_zones') }}
+    where borough != 'Unknown'
+)
+
+SELECT 
+external_fhv_tripdata.dispatching_base_num,
+external_fhv_tripdata.affiliated_base_number,
+external_fhv_tripdata.pickup_locationid,
+external_fhv_tripdata.dropoff_locationid,
+external_fhv_tripdata.pickup_datetime,
+external_fhv_tripdata.dropoff_datetime,
+external_fhv_tripdata.service_type
+FROM external_fhv_tripdata
+inner join dim_zones as pickup_zone 
+on external_fhv_tripdata.pickup_locationid = pickup_zone.locationid 
+inner join dim_zones as dropoff_zone
+on external_fhv_tripdata.dropoff_locationid = dropoff_zone.locationid
+```
+
+Once finished, the lineage of our dbt model should look something like this: 
+
+![dbt-dag](../static/images/de-zc/w4/dbt-dag.png)
+
+## Model Schema
 
 db_utils library provides us with macros we can reuse in our sql, such as the generate hash key macro. 
 
@@ -82,6 +256,9 @@ quick description of CI/CD
 quick description of DRY (dont repeat yourself) and reusable code
 
 quick note about test suites, similar to how we implemented test assertions in Mage
+
+
+## Packages and Macros
 
 dbt packages can be added in the packages.yml file, similar to how we added python dependencies for our docker container 
 in the requirements.txt file in module 1.
@@ -96,6 +273,8 @@ This saves us time when defining the schema of our tables. https://hub.getdbt.co
     model_names = models_to_generate
 ) }}
 ```
+
+## Project Variables
 
 variables can be defined within the dbt_project.yml file for reuse when defining models. i.e. the payment_type_values variable
 is a field that is present in both green and yellow taxi data. 
@@ -119,18 +298,7 @@ and later accessed in the `schema.yml` for our project under both the green and 
 ```
 
 
-The following command will generate documents showing our model dependencies, DAGs, etc.
-
-```shell
-dbt docs generate
-```
-
-run the following command to build the finalized model, which will create a fact_trips table in BigQuery. 
-
-```shell
-dbt build --select +fact_trips+ --vars '{'is_test_run': 'false'}'
-```
-
+## Deployment Jobs (CI/CD)
 
 create a production environment in dbt and schedule a deploy job to run on a specified cadence
 
@@ -139,6 +307,8 @@ on the deploy job, enable `generate docs on run` and `run source freshness`
 
 deploying a continious integration job in dbt. A continious integration job will ensure when any new changes 
 are merged into main, a job will automatically be deployed.
+
+# Data Visualization
 
 ![dashboard](../static/images/de-zc/w4/dashboard.png)
 
