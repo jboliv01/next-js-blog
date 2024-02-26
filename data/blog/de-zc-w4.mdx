@@ -53,7 +53,7 @@ should set you on the right path. Otherwise, I will go into some issues I had wh
 ## Insufficient Memory
 
 I'll start by saying I was wrong in my [Week 3 post](http://localhost:3000/blog/de-zc-w3#mage-pipeline). More specifically, I designed a Mage pipeline with the purpose of ingesting all 
-of the necessary taxi data for our module. When I initially loaded all of the data into GCS, I used [this](http://localhost:3000/blog/de-zc-w3#python-ingestion-script-optional) local python script and only ***then*** did I explore implementing the Mage pipeline. The issue is I only tested one taxi service
+of the necessary taxi data for our module (green, yellow & fhv). When I initially loaded all of the data into GCS, I used [this](http://localhost:3000/blog/de-zc-w3#python-ingestion-script-optional) local python script and only ***then*** did I explore implementing the Mage pipeline. The issue is I only tested one taxi service
 and one year, which seemingly worked, but on further review, I found a plethora of issues when attempting to ingest the yellow taxi data, etc with Mage. My pipeline was failing because I was loading
 too much data into memory, more than my Docker container was configured to handle. This would cause the pipeline to fail and ultimately I would have to restart the docker container as it would freeze up due to memory constraints, resulting in one big headache.
 
