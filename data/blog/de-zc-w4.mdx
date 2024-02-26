@@ -80,6 +80,8 @@ At the end of this section, I've provided an example snapshot of what a Mage pip
 
 Next we have a "dynamic child" block. This secondary data loader takes the url for each item in our download_info list and retrieves the csv data for each month, i.e. January, February and March and returns each as a separate dataframe labeled "child_0, child_1 and child_2". Lastly, our data exporter `exporter_taxi_data_gcs` takes each child block and exports the dataframe into google cloud storage. 
 
+![Mage Dynamic Data Loader](../static/images/de-zc/w4/mage-dynamic-data-loader-2.png)
+
 This parallelization allows us flexibility in a handful of ways. We can speed up our pipeline by increase the amount of concurrenct blocks we want to run. If we set this figure to 3, all 3 of our data loaders will run in parallel, instead of sequentially. If we set the concurrency value to 1, only one child block will run at a time, effectively reducing the amount of data we are loading into memory at one time. You can contrast this with some of the Mage pipelines we built in the earlier modules, where we loaded all of the csv data into one singular dataframe value. This may work in a pinch, but does not scale well the more data we load in. Particularly the yellow taxi data, which contains the most amount of records was giving me this issue!
 
 ![mage-dynamic-blocks-dag](../static/images/de-zc/w4/mage-dynamic-blocks-dag.png)
