@@ -1,33 +1,37 @@
 ---
 title: 'Data Engineering Zoomcamp, Week 4: Analytics Engineering with dbt'
-date: '2024-02-20'
+date: '2024-02-26'
 tags: ['Guide', 'dbt', 'SQL', 'CI/CD', 'Data Engineering', 'Data Visualization']
-draft: true
-summary: Explore key takeaways from Week 4 of the Data Engineering Zoomcamp
+draft: false
+summary: Explore Takeaways from Week 4 of the Data Engineering Zoomcamp as we tackle the intricacies of dbt™ in Analytics Engineering, navigate data pipeline challenges, and explore the integration of dbt models with Looker Studio for advanced data analysis.
 ---
 
 As defined on their [website](https://www.getdbt.com/product/what-is-dbt), **dbt™** is a SQL-first 
 transformation workflow that lets teams quickly and collaboratively deploy analytics code following 
 software engineering best practices like modularity, portability, CI/CD, and documentation. 
 
-Allowing anyone on the data team to safely contribute to production-grade data pipelines.
+In this week's post, I reflect on some of the initial challenges I faced while working through the Week 4 module, particulary regarding the datasets needed. I'll offer an interesting solution in which I admitedlly spent way too much time implementing, but enjoyed nonethless. 
 
-enables us to apply software engineering best practices into our SQL code. Contains libraries, similar to python libraries 
-that have pre written macros, similar to python functions.
+We'll start by touching on the prerequisites required for the Module, prior to diving into potential memory issues in Mage data pipelines and timestamp precision complexities that arise when converting parquet to a pandas dataframe. Lastly, I'll rehash the steps we performed in the module to successfully create a dbt model we can use for further analysis with Google's BI solution, Looker Studio.
+
+I spent a lot of time putting this post together and I hope you find it insightful. If you have any questions or would simply like to connect, feel free to add me on [LinkedIn](https://www.linkedin.com/feed/)!
+
+Lastly, the contents of this post are based on my learnings from Week 4 of the DTC Data Engineering Zoomcamp, which you can find at this GitHub [repository](https://github.com/DataTalksClub/data-engineering-zoomcamp/tree/main/04-analytics-engineering).
 
 - [Prerequisites](#prerequisites)
 - [Potential Issues](#potential-issues)
   - [Insufficient Memory](#insufficient-memory)
-  - [Updated Mage Solution](#updated-mage-solution)
   - [Timestamp Precision](#timestamp-precision)
-  - [Creating and Deploying a **dbt™** Model](#creating-and-deploying-a-dbt-model)
+- [Updated Mage Pipeline](#updated-mage-pipeline)
+- [Creating and Deploying a **dbt™** Model](#creating-and-deploying-a-dbt-model)
   - [Setup](#setup)
     - [Create a project](#create-a-project)
-    - [Link project to Github](#link-project-to-github)
-    - [Link project to Data Warehouse](#link-project-to-data-warehouse)
-  - [Staging Models](#staging-models)
-  - [Core Models](#core-models)
-  - [Model Schema](#model-schema)
+    - [Connect project to Github Repository](#connect-project-to-github-repository)
+    - [Connect project to Data Warehouse](#connect-project-to-data-warehouse)
+  - [Define dbt Models](#define-dbt-models)
+    - [Staging Models](#staging-models)
+    - [Core Models](#core-models)
+    - [Model Schema](#model-schema)
   - [Packages and Macros](#packages-and-macros)
   - [Project Variables](#project-variables)
   - [Deployment Jobs (CI/CD)](#deployment-jobs-cicd)
@@ -72,10 +76,6 @@ Here is an example of what a Mage pipeline with dynamic blocks looks like. For t
 
 ![mage-dynamic-blocks-dag](../static/images/de-zc/w4/mage-dynamic-blocks-dag.png)
 
-## Updated Mage Solution
-
-If your curious about my implementation of Mage, you can take a look at my [repo](https://github.com/jboliv01/MagePipelines) which contains the pipeline I outlined above.
-
 ## Timestamp Precision
 
 > I want to first note that this issue can be avoided simply by using the [csv data in the DTC repo](https://github.com/DataTalksClub/nyc-tlc-data/releases/download/fhv/fhv_tripdata_2019-01.csv.gz), but I was curious of the parquet format and wanted to explore that further by going directly to the [source](https://www1.nyc.gov/site/tlc/about/tlc-trip-record-data.page). 
@@ -102,13 +102,25 @@ To illustrate these out-of-range values, refer to the following table. As a Data
 | Out of Bounds                   | 10,000,000,000,000,000| 10,000,000,000,000,000,000 (1e19)          | No                   |
 | Out of Bounds                   | 33,106,123,800,000,000| 33,106,123,800,000,000,000 (3.31e19)       | No                   |
 
-## Creating and Deploying a **dbt™** Model
+# Updated Mage Pipeline
+
+If your curious about my implementation of Mage, you can take a look at my [repo](https://github.com/jboliv01/MagePipelines) which contains the pipeline I outlined above, which is specifically named `ingest_all_taxi_data_gcs_csv`.
+
+# Creating and Deploying a **dbt™** Model
+dbt™ stands as a bridge between data engineering and software engineering, introducing practices from the latter to enhance the management and deployment of SQL code. Just as Python benefits from a wealth of libraries, dbt offers a suite of packages equipped with pre-written macros. These macros, akin to Python functions, simplify and streamline the creation and maintenance of our data models, making the overall process more efficient and manageable.
 
 ## Setup
+Setting up a dbt project involves several key steps that lay the foundation for efficient data modeling and transformation. Let's walk through the process of creating a new dbt project.
 
 ### Create a project
 
-### Link project to Github
+If you haven't already, you can signup for an account [here](https://auth.cloud.getdbt.com/login?state=hKFo2SBRNjRjS1B2WVVZMVNiVHk0ZnhiV0Y2YUFLMlBUTC1TVqFupWxvZ2luo3RpZNkgZXhCQVY2Z3B1cjk0S1FmT2NoZWV0eXhVSTJKc0RDMkKjY2lk2SBSbGJ3eTBaa0FRUEJBaEhVNEpnZjZ2bW44SGFBNzNvWQ&client=Rlbwy0ZkAQPBAhHU4Jgf6vmn8HaA73oY&protocol=oauth2&response_type=code&redirect_uri=https%3A%2F%2Fcloud.getdbt.com%2Fapi%2Fauth%2Fauth-login%2F&scope=openid%20profile)
+
+Once signed in, you will need to create a DBT Account, which may sound confusing considering we just setup an account, but think of it as a directory that holds all of your dbt projects. I named mine `DTC DE Zoomcamp`.
+
+If you are having trouble, refer to the [documentation](https://github.com/DataTalksClub/data-engineering-zoomcamp/blob/main/04-analytics-engineering/dbt_cloud_setup.md) provided by DTC in the Week 4 readme for setuping dbt cloud.
+
+### Connect project to Github Repository
 Before we create and deploy our dbt project, we will need to link dbt to our github repository, more specifically a cloned repository containg the Week 4 "04-analytics-engineering" folder. After we link the repository, 
 
 > Note: I recommend using the GitHub connector instead of the Git Clone option, as I later had issues with deploying a CI Job due to using the latter.
@@ -118,10 +130,12 @@ Before we create and deploy our dbt project, we will need to link dbt to our git
 Next you will need to set the project subdirectory to the location of of our dbt project, which is within the `taxi_rides_ny` folder.
 ![dashboard](../static/images/de-zc/w4/dbt-project-repository.png)
 
-### Link project to Data Warehouse
+### Connect project to Data Warehouse
 Lastly, we need to link our project to our BigQuery Data Warehouse. This is pretty straight forward, as it allows us to import the service account key we generated in the previous module. At this point, you likely already have one downloaded, but see my previous post [here](http://localhost:3000/blog/de-zc-w1-2#download-an-api-key-for-your-service-account) if you need a refresher.
 
-## Staging Models
+## Define dbt Models
+
+### Staging Models
 Now that our project has been configured with the necessary settings, it's time to open up the dbt IDE and get started. Once the IDE has loaded, one of the first things you may notice is a button prompting us to "Create Branch". It is best practice to create feature branches, which are any changes we want to make to our original code, prior to submitting whats known as a "pull request" that generally has to be reviewed by others to assure there are no breaking changes. Once reviewed, the pull request can then be merged into our main branch. In this case, we own the repository so we have the ability to create a feature branch, update our code, submit a pull request and approve it. 
 
 Under our dbt project taxi_rides_ny, there should be a models folder containing two subfolders: staging and core. The staging model will define the schema of our taxi data as well as some test suites. The core model will contain our fact table, which will ultimately join our green and yellow taxi data together as one table for further analysis.
@@ -208,7 +222,7 @@ Running the following dbt command will create the staging table in google bigque
 dbt build --select +stg_external_fhv_tripdata+ --vars '{'is_test_run': 'false'}'
 ```
 
-## Core Models
+### Core Models
 
 Within the `Models` folder, we should have two subfolders, `Core` and `Staging`. With our staging model defined, we now need to create a our finalized `Fact` model. This is where we will perform any necessary joins to our table. We no longer need to worry about the data types in our schema as we have handled that in our staging table model. In the case of our `fact_fhv_trips.sql` model, we are selecting the necessary columns we want in our finalized model and performing two inner-joins to our `dim_zones` model, which has a `where` clause to filter out any zones with a borough type of `unknown`. This was a requirement for one of the homework questions in the week 4 module.
 
@@ -248,7 +262,7 @@ Once finished, the lineage of our dbt model should look something like this:
 
 ![dbt-dag](../static/images/de-zc/w4/dbt-dag.png)
 
-## Model Schema
+### Model Schema
 
 In our `schema.yml` file we can 
 
