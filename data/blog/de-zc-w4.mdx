@@ -74,7 +74,9 @@ concurrency_config:
   block_run_limit: 1
 ```
 
-At the end of this section, I've provided an example snapshot of what a Mage pipeline with dynamic blocks looks like during execution. For the sake of simplicity, I only loaded 3 months of Taxi data. The pipeline works as follows, the `fetch_taxi_url_metadata_csv` block is configured as a "dynamic block". It iterates through a range of 12, representing the total months in a year, then appends the url data for each file to a list of dictionaries that is referenced in our return statement as [download_info] to be passed unto our child block `fetch_taxi_url_data_csv`. 
+At the end of this section, I've provided an example snapshot of what a Mage pipeline with dynamic blocks looks like during execution. For the sake of simplicity, I only loaded 3 months of Taxi data. The pipeline works as follows, the `fetch_taxi_url_metadata_csv` block is configured as a "dynamic block". It iterates through a range of 12, representing the total months in a year, then appends the url data for each file to a list of dictionaries that is referenced in our return statement as [download_info] to be passed unto our child block `fetch_taxi_url_data_csv`. The output of this block would look like the following image: 
+
+![Mage Dynamic Data Loader](../static/images/de-zc/w4/mage-dynamic-data-loader.png)
 
 Next we have a "dynamic child" block. This secondary data loader takes the url for each item in our download_info list and retrieves the csv data for each month, i.e. January, February and March and returns each as a separate dataframe labeled "child_0, child_1 and child_2". Lastly, our data exporter `exporter_taxi_data_gcs` takes each child block and exports the dataframe into google cloud storage. 
 
