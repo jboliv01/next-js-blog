@@ -54,13 +54,14 @@ should set you on the right path. Otherwise, I will go into some issues I had wh
 
 I'll start by saying I was wrong in my [Week 3 post](http://localhost:3000/blog/de-zc-w3#mage-pipeline). More specifically, I designed a Mage pipeline with the purpose of ingesting all 
 of the necessary taxi data for our module (green, yellow & fhv). When I initially loaded all of the data into GCS, I used [this](http://localhost:3000/blog/de-zc-w3#python-ingestion-script-optional) local python script and only ***then*** did I explore implementing something similar with Mage. The issue is I only tested one taxi service (green)
-and one year (2019), which seemingly worked, but on further review, I found a plethora of issues when attempting to ingest the yellow taxi data, etc with Mage. My pipeline was failing because I was loading
+and one year (2019), which was successful, but I found a plethora of issues when attempting to ingest the yellow taxi data, etc with Mage after the fact. My pipeline was failing because I was loading
 too much data into memory, more than my Docker container was configured to handle. This would cause the pipeline to fail and ultimately I would have to restart the docker container as it would freeze up due to memory constraints, resulting in one big headache.
 
 This lead me on a search for a solution to my memory problem, but this is not your grandpas memory problem.  The first thing I discovered was what Mage calls `dynamic blocks`. Dynamic blocks allow you to split up blocks, such as a data loader, into multiple pieces and run them in parallel. For example, we can take our data loader and rather concatenating 
 all of our taxi data into one dataframe, we can split it into separate blocks that can each be loaded into memory in parallel or even sequentially. 
 
-At first, I ran 4 blocks in parallel (4 data loader blocks), each block represented a parquet file containing taxi data for a specific month (i.e. Jan, Feb, March). At this point I assumed I had cracked the code, but still found my pipleine was failing due to insufficient memmory, once again. 
+At first, I ran 4 blocks in parallel (4 data loader blocks), each block represented a parquet file containing taxi data for a specific month (i.e. Jan, Feb, March). At this point I assumed I had cracked the code, but still found my pipleine was failing due to insufficient memmory, once again.
+ 
 The solution I arrived at was to configure my Data Loader as a dynamic block and to then modify the concurrency of said blocks within the `metadata.yml` file belonging to my pipeline to a value of 1. This enabled my pipeline to run each dynamic block sequentially (1 by 1) until each file was loaded, 
 rather than appending all the files to a single dataframe.
 
