@@ -18,6 +18,7 @@ that have pre written macros, similar to python functions.
 - [Prerequisites](#prerequisites)
 - [Potential Issues](#potential-issues)
   - [Insufficient Memory](#insufficient-memory)
+  - [Updated Mage Solution](#updated-mage-solution)
   - [Timestamp Precision](#timestamp-precision)
   - [Creating and Deploying a **dbt™** Model](#creating-and-deploying-a-dbt-model)
   - [Setup](#setup)
@@ -71,6 +72,9 @@ Here is an example of what a Mage pipeline with dynamic blocks looks like. For t
 
 ![mage-dynamic-blocks-dag](../static/images/de-zc/w4/mage-dynamic-blocks-dag.png)
 
+## Updated Mage Solution
+
+If your curious about my implementation of Mage, you can take a look at my [repo](https://github.com/jboliv01/MagePipelines) which contains the pipeline I outlined above.
 
 ## Timestamp Precision
 
@@ -127,12 +131,11 @@ Under staging, we defined the schema of our tables in `schema.yml`. Dbt then all
 ```yaml
 sources:
   - name: staging
-    database: taxi-rides-ny-339813-412521
+    database: dtc-de-zoomcamp-12345
      # For postgres:
       #database: production
-    schema: trips_data_all
+    schema: ny_taxi
 
-      # loaded_at_field: record_loaded_at
     tables:
       - name: external_green_tripdata
       - name: external_yellow_tripdata
@@ -141,7 +144,7 @@ sources:
            # error_after: {count: 6, period: hour}
 ```
 
-For the sake of this blog post, I will share the `external_fhv_tripdata.sql` model I first auto-generated but then later modeled after the green and yellow tripdata models. 
+For the sake of this blog post, I will share the `external_fhv_tripdata.sql` model I first auto-generated but then later modified to be consistent with the green and yellow tripdata models. 
 
 ```yaml
 {{ config(materialized="view") }}
@@ -247,25 +250,59 @@ Once finished, the lineage of our dbt model should look something like this:
 
 ## Model Schema
 
-db_utils library provides us with macros we can reuse in our sql, such as the generate hash key macro. 
+In our `schema.yml` file we can 
 
-show an image of the resulting data model we want to build in dbt here, including fact and dim tables. 
+```yaml
+sources:
+  - name: staging
+    database: dtc-de-zoomcamp-12345
+    schema: ny_taxi
 
-quick description of CI/CD
+    tables:
+      - name: external_green_tripdata
+      - name: external_yellow_tripdata
+      - name: external_fhv_tripdata
+```
 
-quick description of DRY (dont repeat yourself) and reusable code
+and within a downstream model, we can use:
 
-quick note about test suites, similar to how we implemented test assertions in Mage
+```sql
+select * from {{ source('staging', 'external_fhv_tripdata') }}
+```
 
+Which will be compiled to: 
+
+```sql
+select * from dtc-de-zoomcamp-12345.ny_taxi.external_fhv_tripdata
+```
+
+We can also define tests we would like to execute against our models on build time. i.e. we want to test our `tripid` column to ensure each field is unique and not a null value, in the instance below, a warning will be thrown if a record does not meet that criteria. A warning will not stop our model from deploying, but if we were to change the severity type to error, this would stop our deployment. This can all be defined within our schema.yml file in the `Staging` subdirectory we've created within `Models`.
+
+```yaml
+models:
+  - name: stg_external_green_tripdata
+    description: ""
+    columns:
+      - name: tripid
+        data_type: string
+        description: ""
+        tests:
+          - unique:
+              severity: warn
+          - not_null:
+              severity: warn
+```
 
 ## Packages and Macros
 
 dbt packages can be added in the packages.yml file, similar to how we added python dependencies for our docker container 
-in the requirements.txt file in module 1.
+in the requirements.txt file in module 1. We utilized some of these macros while building out our staging models.
 
-The dbt-labs/codegen package contains a handful of useful macros that make writing a model more efficient. For example, 
+[db_utils](https://hub.getdbt.com/dbt-labs/dbt_utils/latest/) package provides us with macros we can (re)use across dbt projects, such as the generate hash key macro we used in our staging model to create a unique primary key. 
+
+The [dbt-labs/codegen](https://hub.getdbt.com/dbt-labs/codegen/latest/) package contains a handful of useful macros that make writing a model more efficient. For example, 
 we can use the `generate_model_yaml` macro to generate the YAML for a list of models we can then paste into our schema.yml file. 
-This saves us time when defining the schema of our tables. https://hub.getdbt.com/dbt-labs/codegen/latest/
+This saves us time when defining the schema of our tables. 
 
 ```shell
 {% set models_to_generate = codegen.get_models(directory='marts', prefix='fct_') %}
@@ -276,7 +313,7 @@ This saves us time when defining the schema of our tables. https://hub.getdbt.co
 
 ## Project Variables
 
-variables can be defined within the dbt_project.yml file for reuse when defining models. i.e. the payment_type_values variable
+Variables can be defined within the `dbt_project.yml` to provide data to models for compilation. i.e. the payment_type_values variable
 is a field that is present in both green and yellow taxi data. 
 
 Defined as follows in `dbt_project.yml`:
@@ -286,7 +323,7 @@ vars:
   payment_type_values: [1, 2, 3, 4, 5]
 ```
 
-and later accessed in the `schema.yml` for our project under both the green and yellow taxi models using Jinja:
+and later accessed in the `schema.yml` for our project under both the green and yellow taxi models using the the `{{ var('...') }}` function:
 
 ```yaml
  - name: payment_type
@@ -300,15 +337,27 @@ and later accessed in the `schema.yml` for our project under both the green and 
 
 ## Deployment Jobs (CI/CD)
 
-create a production environment in dbt and schedule a deploy job to run on a specified cadence
+dbt makes creating a CI job fairly simple. We will start by creating a new environment within dbt under `Deploy -> Environments`.
 
-on the deploy job, enable `generate docs on run` and `run source freshness`
+<ToggleGif gifSrc='/static/images/de-zc/w4/dbt-create-prod-env.gif' staticSrc='/static/images/de-zc/w4/dbt-create-prod-env-thumbnail.png' alt='dbt Create Prod Environment'/>
 
+When configuring the deployment job, we'll enable `generate docs on run` and `run source freshness`. 
 
-deploying a continious integration job in dbt. A continious integration job will ensure when any new changes 
-are merged into main, a job will automatically be deployed.
+A `Continious Integration job` will ensure when any new changes are successfully merged into main, a job will automatically be deployed and any updates will be applied to our production model.
+
+dbt effectively describes how CI works in their [documentation](https://docs.getdbt.com/docs/deploy/continuous-integration): "When you set up CI jobs, dbt Cloud listens for webhooks from your Git provider indicating that a new PR has been opened or updated with new commits. When dbt Cloud receives one of these webhooks, it enqueues a new run of the CI job. 
+
+dbt Cloud builds and tests the models affected by the code change in a temporary schema, unique to the PR. This process ensures that the code builds without error and that it matches the expectations as defined by the project's dbt tests...
+
+When the CI run completes, you can view the run status directly from within the pull request. dbt Cloud updates the pull request in GitHub, GitLab, or Azure DevOps with a status message indicating the results of the run. The status message states whether the models and tests ran successfully or not.
+
+dbt Cloud deletes the temporary schema from your data warehouse when you close or merge the pull request."
+
+We can also setup a `Deploy job` simply to run our model at a scheduled cadence to ensure any new data that may have been ingested into our data source will be captured in our production models.
 
 # Data Visualization
+
+Now that we have solidified our data model, we can use Google's data looker studio to create a dashboard for analysis. Naturally, Google's BigQuery is already built in as a data connector, which makes accessing our data a straightforward process. I used our newly created `fact_trips` model to build a simple dashboard which aims to convey how Taxi Trips and Revenue were effected by covid from 2019-2020.
 
 ![dashboard](../static/images/de-zc/w4/dashboard.png)
 
