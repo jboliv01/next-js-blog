@@ -91,3 +91,28 @@ services:
     volumes:
       - ./code:/opt/spark/work-dir  # Mount the 'code' directory to the container's work directory
 ```
+
+# Spark
+## RDDs
+Distributed collection of objects
+Spark dataframes are built upon RDDs internally. This is an additional layer of abstraction Spark provides.
+
+For example, the following code block we read a parquet file from a gcs bucket into a spark dataframe. When we call df.take(5), it will return an array of rows, in this case 5. Essentially, a datframe in Apache Spark is an abstraction built on top of RDDs. You can explicity convert a dataframe to an rdd by calling `.rdd` method on the dataframe.
+
+```python
+spark = SparkSession.builder \
+    .appName("Read and Write Parquet to GCS") \
+    .getOrCreate()
+
+# Specify the path to the Parquet files in GCS
+bucket_name="your-bucket-name"
+path = f"gs://{bucket_name}/ny_taxi_data/service=green/year=2019/month=10"
+
+spark._jsc.hadoopConfiguration().set("google.cloud.auth.service.account.json.keyfile","path-to-your-credentials.json")
+
+df = spark.read.parquet(path)
+
+rdd = df.rdd
+
+rdd.take(5)
+```
