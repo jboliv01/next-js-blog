@@ -97,7 +97,15 @@ services:
 Distributed collection of objects
 Spark dataframes are built upon RDDs internally. This is an additional layer of abstraction Spark provides.
 
-For example, the following code block we read a parquet file from a gcs bucket into a spark dataframe. When we call df.take(5), it will return an array of rows, in this case 5. Essentially, a datframe in Apache Spark is an abstraction built on top of RDDs. You can explicity convert a dataframe to an rdd by calling `.rdd` method on the dataframe.
+For example, the following code block we read a parquet file from a gcs bucket into a spark dataframe. When we call df.take(5), it will return an array of rows, in this case 5. Essentially, a datframe in Apache Spark is an abstraction built on top of RDDs. While searching up home to explain abstraction, I found a definition that I find quite insightful 
+
+> "Abstraction, as used in computer science, is a simplified expression of a series of tasks or attributes that allow for a more defined, accessible representation of data or systems. In computer programming, abstraction is often considered a means of “hiding” additional details, external processes and internal technicalities to succinctly and efficiently define, replicate and execute a process." - [Lcom Team](https://www.learning.com/blog/examples-of-abstraction-in-everyday-life/)
+
+Consider the Pandas python library, this is essentially an abstraction which allows us to work with and analyze data with ease.
+
+You can explicity convert a dataframe to an rdd by calling `.rdd` method on the dataframe.
+
+
 
 ```python
 spark = SparkSession.builder \
