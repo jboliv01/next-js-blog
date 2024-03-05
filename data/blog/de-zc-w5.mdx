@@ -103,7 +103,7 @@ For example, the following code block we read a parquet file from a gcs bucket i
 
 Consider the Pandas python library, this is essentially an abstraction which allows us to work with and analyze data in python with ease.
 
-In PySpark, you can explicity convert a dataframe into an rdd by calling `.rdd` method on the dataframe. 
+In PySpark, converting a dataframe to an RDD is straightfoward, just apply `.rdd` method to your dataframe which will then allow access to RDD operations. However, you lose the DataFrame optimizations and must then manually handle the structured nature of your data.
 
 ```python
 spark = SparkSession.builder \
