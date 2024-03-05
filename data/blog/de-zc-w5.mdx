@@ -101,11 +101,9 @@ For example, the following code block we read a parquet file from a gcs bucket i
 
 > "Abstraction, as used in computer science, is a simplified expression of a series of tasks or attributes that allow for a more defined, accessible representation of data or systems. In computer programming, abstraction is often considered a means of “hiding” additional details, external processes and internal technicalities to succinctly and efficiently define, replicate and execute a process." - [Lcom Team](https://www.learning.com/blog/examples-of-abstraction-in-everyday-life/)
 
-Consider the Pandas python library, this is essentially an abstraction which allows us to work with and analyze data with ease.
+Consider the Pandas python library, this is essentially an abstraction which allows us to work with and analyze data in python with ease.
 
-You can explicity convert a dataframe to an rdd by calling `.rdd` method on the dataframe.
-
-
+In PySpark, you can explicity convert a dataframe into an rdd by calling `.rdd` method on the dataframe. 
 
 ```python
 spark = SparkSession.builder \
