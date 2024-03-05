@@ -66,6 +66,15 @@ CMD ["jupyter", "lab", "--ip='0.0.0.0'", "--port=8888", "--no-browser", "--allow
 ```
 
 ### Docker Compose
+
+In order to run our jupyter notebook alongside our Spark UI, we need to configure these services in `docker-compose.yml`. Recall in Week 1 when we used docker-compose to configure our PostgreSQL database as well as pgadmin4 in order to query said database. Same thing in Week 2 when we configured Mage to run on our container. I've defined multiple ports for the SparkUI application to run on as each Spark session/application we run will be logged separately, i.e. the app below may run on port `4040` where if we instantiated a second app named `test` it would log to the Spark UI on port `4041`, `4042`, etc.
+
+```python
+spark = SparkSession.builder \
+    .appName("Read and Write Parquet to GCS") \
+    .getOrCreate()
+```
+
 ```yml
 version: '3'
 services:
