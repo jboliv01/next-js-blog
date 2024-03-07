@@ -122,3 +122,12 @@ rdd = df.rdd
 
 rdd.take(5)
 ```
+
+# Spark Cluster
+
+We can setup a local cluster by going into our spark directory and utilizing the following shell scripts spark provides.
+Within our docker container, Spark is located in `/opt/spark/` directory. Open a terminal in the docker container and run the following commands. 
+
+- ./sbin/start-master.sh
+- ./sbin/start-worker.sh
+- ./bin/spark-submit
