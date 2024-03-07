@@ -137,7 +137,7 @@ First, we need to run `start-master.sh` which will start a local standalone spar
 ```shell
 ./sbin/start-master.sh
 ```
-After you've ran the command to start our master server, we will need to run the following command
+After you've ran the command to start our master server, we will need to run the following command to start a worker, which will be used to execute our spark jobs.
 
 ```shell
 ./sbin/start-worker.sh <master-spark-URL>
@@ -145,7 +145,6 @@ After you've ran the command to start our master server, we will need to run the
 # example:
 # ./sbin/start-worker.sh spark://f22e994ff136:7077`
 ```
-
 
 Simply add this line of code into your `06_spark_sql.py` script in order to authenticate to your gcs bucket.
 
