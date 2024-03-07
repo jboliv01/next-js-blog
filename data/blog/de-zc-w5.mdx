@@ -131,3 +131,20 @@ Within our docker container, Spark is located in `/opt/spark/` directory. Open a
 - ./sbin/start-master.sh
 - ./sbin/start-worker.sh
 - ./bin/spark-submit
+
+```shell
+MASTER_URL = 'spark://f22e994ff136:7077'
+BUCKET_NAME = "your-bucket-name"
+PATH = f"gs://{BUCKET_NAME}/ny_taxi_data/service=green/year=2019/month=*"
+OUTPUT_PATH = f"gs://{BUCKET_NAME}/ny_taxi_data/service=green/year=2019/report/revenue"
+```
+
+```shell
+./bin/spark-submit \
+  --master={MASTER_URL}\
+    06_spark_sql.py \
+        --input_green={PATH} \
+        --input_yellow=
+        --output={OUTPUT_PATH}
+
+```
