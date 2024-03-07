@@ -132,6 +132,12 @@ Within our docker container, Spark is located in `/opt/spark/` directory. Open a
 - ./sbin/start-worker.sh
 - ./bin/spark-submit
 
+First, we need to run `start-master.sh` which will start a local standalone spark cluster at [http://localhost:8080/](http://localhost:8080/). Assuming you are the `Dockerfile` and `docker-compose` file we implemented earlier, the Spark cluster will be named something like `Spark Master at spark://f22e994ff136:7077`, `spark://f22e994ff136:7077` being the URL we will reference below prior to executing our `06_spark_sql.py` script below. `f22e994ff136` being the hostname generated for my specific Docker container.
+
+```shell
+./sbin/start-master.sh
+```
+
 Simply add this line of code into your `06_spark_sql.py` script in order to authenticate to your gcs bucket.
 
 ```python
