@@ -132,20 +132,30 @@ Within our docker container, Spark is located in `/opt/spark/` directory. Open a
 - ./sbin/start-worker.sh
 - ./bin/spark-submit
 
-```shell
-MASTER_URL = 'spark://f22e994ff136:7077'
-BUCKET_NAME = "your-bucket-name"
-GREEN_PATH = f"gs://{BUCKET_NAME}/ny_taxi_data/service=green/year=2019/month=*"
-YELLOW_PATH = f"gs://{BUCKET_NAME}/ny_taxi_data/service=yellow/year=2019/month=*"
-OUTPUT_PATH = f"gs://{BUCKET_NAME}/ny_taxi_data/report/year=2019/revenue"
+Simply add this line of code into your `06_spark_sql.py` script in order to authenticate to your gcs bucket.
+
+```python
+spark = SparkSession.builder \
+    .appName('test') \
+    .getOrCreate()
+
+spark._jsc.hadoopConfiguration().set("google.cloud.auth.service.account.json.keyfile","/opt/spark/work-dir/dtc-de-zoomcamp-410523-cc75fbfdb8b8.json")
 ```
 
 ```shell
-./bin/spark-submit \
-  --master={MASTER_URL}\
-    06_spark_sql.py \
-        --input_green={GREEN_PATH} \
-        --input_yellow={YELLOW_PATH}
-        --output={OUTPUT_PATH}
+export MASTER_URL="spark://f22e994ff136:7077"
+export BUCKET_NAME="mage-zoomcamp-jonah-oliver"
+export GREEN_PATH="gs://${BUCKET_NAME}/ny_taxi_data/service=green/year=2019/month=*"
+export YELLOW_PATH="gs://${BUCKET_NAME}/ny_taxi_data/service=yellow/year=2019/month=*"
+export OUTPUT_PATH="gs://${BUCKET_NAME}/ny_taxi_data/report/revenue/year=2019"
+```
+
+```shell
+spark-submit \
+    --master="${MASTER_URL}" \
+        06_spark_sql.py \
+            --input_green="${GREEN_PATH}" \
+            --input_yellow="${YELLOW_PATH}" \
+            --output="${OUTPUT_PATH}"
 
 ```
