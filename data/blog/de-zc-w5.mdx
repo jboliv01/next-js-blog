@@ -258,16 +258,14 @@ print(squared_numbers)
 #Result of implementing map function on our RDD:
 # [1, 4, 9, 16, 25]
 ```
-
 Although converting a DataFrame to an RDD provides access to lower-level functions, it bypasses the optimizations inherent to DataFrames. Therefore, this operation should be used judiciously, considering the potential performance implications.
 
 ## Integrating with Google Cloud Storage (GCS)
 
-Simply add this line of code into your `06_spark_sql.py` script in order to authenticate to your gcs bucket.
+To access Google Cloud Storage (GCS) from your Spark application, authenticate using a service account JSON keyfile. Add the following line to your `06_spark_sql.py` script:
 
 ```python
-mport argparse
-
+import argparse
 import pyspark
 from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
@@ -288,13 +286,13 @@ spark = SparkSession.builder \
     .appName('test') \
     .getOrCreate()
 
-# add this line to script 
+# Auth to GCS
 spark._jsc.hadoopConfiguration().set("google.cloud.auth.service.account.json.keyfile","/opt/spark/work-dir/dtc-de-zoomcamp-12345-678910.json")
 
 # Remainder of script...
 ```
 
-Now, lets open up a terminal in our Docker Container and set our environmental variables.
+Open a terminal in your Docker container and set the necessary environment variables:
 
 ```shell
 export MASTER_URL="spark://<container-id>:7077"
@@ -304,7 +302,7 @@ export YELLOW_PATH="gs://${BUCKET_NAME}/ny_taxi_data/service=yellow/year=2019/mo
 export OUTPUT_PATH="gs://${BUCKET_NAME}/ny_taxi_data/report/revenue/year=2019"
 ```
 
-With our variables configured, we can now run Spark Submit on our local cluster.
+Execute the Spark job on your local cluster using spark-submit:
 
 ```shell
 spark-submit \
@@ -316,23 +314,16 @@ spark-submit \
 
 ```
 
-After running `spark-submit` while passing in our script parameters, we can access the job details at 
-[http://localhost:4040](http://localhost:4040) during the job runtime, but note it only becomes active and accessible when a Spark application is running. When the job is complete, the UI will no longer be accessible. If you are running some of the scripts in module 5 within a Jupyter Notebook, this will likely not be an issue.
-
+Access the Spark job's UI at [http://localhost:4040](http://localhost:4040) during runtime. Note that this UI is only active while the Spark application is running.
 
 ## Google Dataproc
 
-We can submit a Spark Job via Google's Dataproc web UI, but before we can do this, we must first create a cluster.
-
-gs://mage-zoomcamp-jonah-oliver/ny_taxi_data/code/06_spark_sql.py
-
---input_yellow=gs://mage-zoomcamp-jonah-oliver/ny_taxi_data/service=yellow/year=2019/month=*
---input_green=gs://mage-zoomcamp-jonah-oliver/ny_taxi_data/service=green/year=2019/month=*
---output=gs://mage-zoomcamp-jonah-oliver/ny_taxi_data/report/revenue/year=2019
+To submit a Spark job via Google Dataproc, first [create a cluster]((https://console.cloud.google.com/dataproc/clusters?) in the Dataproc web UI.
 
 ### Submitting a Job with Google Cloud SDK
 
-Finally, after creating and configuring a [Google Dataproc cluster](https://console.cloud.google.com/dataproc/clusters?project=dtc-de-zoomcamp-410523), we can now use the Google Cloud SDK CLI to run our script on a cluster. Be sure to upload `06_spark_sql.py` to a directory in your bucket, i.e. `your-bucket/code/`.
+After setting up your Dataproc cluster, use the Google Cloud SDK CLI to submit your Spark job.
+Ensure `06_spark_sql.py` is uploaded to your GCS bucket (e.g., gs://your-bucket/code/).
 
 1. **Auth to Google Cloud**
 ```shell
@@ -340,11 +331,11 @@ gcloud auth login
 ```
 
 2. **Set Google Project ID**
-```
+```shell
 gcloud config set project <project-id>
 ```
 
-3. **Run Spark Submit**
+3. **Submit the Spark Job**
 ```shell
 gcloud dataproc jobs submit pyspark \
     --cluster=de-zoomcamp-cluster \
