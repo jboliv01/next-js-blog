@@ -1,9 +1,9 @@
 ---
 title: 'Data Engineering Zoomcamp, Week 5: Apache Spark'
-date: '2024-03-05'
-tags: ['Guide', 'Spark', 'Distributed Computing', 'Python', 'SQL', 'Docker', 'Data Engineering']
+date: '2024-03-09'
+tags: ['Data Engineering', 'Apache Spark', 'Distributed Computing', 'Big Data', 'Docker','Cloud Storage', 'GCP', 'Python']
 draft: true
-summary: Insights into Week 5 of the DTC DE Zoomcamp covering distributed computing with Apache Spark.
+summary: Exploring Apache Spark's role in distributed computing. Learn how to set up Spark with Docker, understand core Spark concepts, and integrate with Google Cloud Storage for advanced data processing.
 ---
 
 - [Prerequisites](#prerequisites)
@@ -16,6 +16,8 @@ summary: Insights into Week 5 of the DTC DE Zoomcamp covering distributed comput
     - [Setting Up a Local Spark Cluster with Docker](#setting-up-a-local-spark-cluster-with-docker)
   - [Spark's Core Concepts](#sparks-core-concepts)
     - [RDDs (Resilient Distributed Datasets)](#rdds-resilient-distributed-datasets)
+    - [Transformations and Actions](#transformations-and-actions)
+    - [Lazy Evaluation](#lazy-evaluation)
     - [Example of Reading Data into a Dataframe](#example-of-reading-data-into-a-dataframe)
     - [Understanding Abstraction in Computer Science](#understanding-abstraction-in-computer-science)
     - [Converting DataFrame to an RDD](#converting-dataframe-to-an-rdd)
@@ -106,7 +108,7 @@ EXPOSE 8888 4040 8080 8081 18080
 
 # Start Jupyter Lab by default
 CMD ["jupyter", "lab", "--ip='0.0.0.0'", "--port=8888", "--no-browser", "--allow-root", "--NotebookApp.token=''", "--NotebookApp.password=''"]
-
+```
 
 ### Docker Compose
 
@@ -192,6 +194,12 @@ By setting up a local Spark cluster in Docker, you get a practical, scalable env
 
 ### RDDs (Resilient Distributed Datasets)
 RDDs, or Resilient Distributed Datasets, are a fundamental concept in Apache Spark, representing a distributed collection of objects. Internally, Spark DataFrames are built upon RDDs, introducing an additional layer of abstraction that facilitates more efficient data handling and processing.
+
+### Transformations and Actions
+Spark operations are categorized into transformations (like map, filter, groupBy) which create new RDDs or DataFrames without immediate computation, and actions (like count, collect, saveAs) which trigger computations and produce results.
+
+### Lazy Evaluation 
+Spark utilizes lazy evaluation to optimize processing efficiency. Computations on RDDs or DataFrames are delayed until an action is triggered, allowing Spark to optimize the overall data processing workflow.
 
 ### Example of Reading Data into a Dataframe
 Consider the following code block where we read a Parquet file from a Google Cloud Storage (GCS) bucket into a Spark DataFrame. Upon executing df.take(5), Spark returns an array of the first five rows from the DataFrame:
