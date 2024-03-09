@@ -31,7 +31,7 @@ Before we get into the specifics of Spark, it's essential to set up a local envi
 
 ## Running Spark in a local Docker container
 
-While setting up my Spark cluster on a Windows machine, I encountered issues related to Spark's version compatibility, particularly with Pandas. The Spark version 3.3.2 I initially used depended on the iteritems function from Pandas when creating a Spark DataFrame, a method that has been [deprecated since version 1.5.0](https://pandas.pydata.org/pandas-docs/version/1.5/reference/api/pandas.DataFrame.iteritems.html). This incompatibility resulted in an `AttributeError`:
+While setting up my Spark cluster on a Windows machine, I encountered an issue related to Spark's version compatibility, particularly with Pandas. The Spark version 3.3.2 we are using depends on the `iteritems` function from Pandas when creating a Spark DataFrame, a method that has been [deprecated since version 1.5.0](https://pandas.pydata.org/pandas-docs/version/1.5/reference/api/pandas.DataFrame.iteritems.html). This incompatibility resulted in an `AttributeError`:
 
 ```python
 spark.createDataFrame(df_pandas).schemaI am getting AttributeError: 'DataFrame' object has no attribute 'iteritems'
@@ -43,7 +43,7 @@ To resolve this, I upgraded PySpark to version `3.5.1` and updated Pandas to ver
 
 ### Dockerfile
 
-The Dockerfile below sets up an Ubuntu-based environment with all the necessary dependencies to run Spark, including Java, Python, and Spark itself. Additionally, it installs Jupyter Lab and other Python libraries to aid in the development and execution of Spark applications.
+The Dockerfile below sets up an Ubuntu-based environment with all the necessary dependencies to run Spark, including Java, Python, and Spark itself. Additionally, it installs Jupyter Lab and other Python libraries to aid in the development and execution of Spark applications. Add these files to the week 5 directory in your repo and run `docker compose up` to build your container. You should then be able to access a Jupyter lab with all of the Jupyter notebooks from the week 5 module in the web via [http://localhost:8888](http://localhost:8888).
 
 ```docker
 # Use Ubuntu 20.04 LTS as base image
@@ -55,7 +55,7 @@ ENV TZ=UTC
 
 # Install necessary packages
 RUN apt-get update && \
-    apt-get install -y wget tar git && \
+    apt-get install -y wget tar git curl gnupg && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
@@ -75,7 +75,7 @@ RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -
     bash /tmp/miniconda.sh -b -p /opt/conda && \
     rm /tmp/miniconda.sh
 
-# Install Python 3.8, PySpark 3.5.1, Jupyter Lab, and Pandas 2.0.1
+# Install Python 3.8, PySpark 3.3.2, Jupyter Lab, and Pandas 2.0.1
 # Note: Update PySpark to match the Spark version if necessary
 RUN conda install -y python=3.8 && \
     pip install pyspark==3.5.1 jupyterlab pandas==2.0.1
@@ -89,15 +89,24 @@ RUN wget https://archive.apache.org/dist/spark/spark-3.5.1/spark-3.5.1-bin-hadoo
 # Download and add the GCS connector jar to the Spark jars directory
 RUN wget https://storage.googleapis.com/hadoop-lib/gcs/gcs-connector-latest-hadoop2.jar -O $SPARK_HOME/jars/gcs-connector-latest-hadoop2.jar
 
+# Add the Google Cloud SDK distribution URI as a package source
+RUN echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] http://packages.cloud.google.com/apt cloud-sdk main" | tee /etc/apt/sources.list.d/google-cloud-sdk.list && \
+    curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -
+
+# Install Google Cloud SDK
+RUN apt-get update && \
+    apt-get install -y google-cloud-sdk && \
+    rm -rf /var/lib/apt/lists/*
+
 # Set working directory
 WORKDIR /opt/spark/work-dir
 
 # Expose ports for Jupyter Lab and Spark UI
-EXPOSE 8888 4040
+EXPOSE 8888 4040 8080 8081 18080
 
 # Start Jupyter Lab by default
 CMD ["jupyter", "lab", "--ip='0.0.0.0'", "--port=8888", "--no-browser", "--allow-root", "--NotebookApp.token=''", "--NotebookApp.password=''"]
-```
+
 
 ### Docker Compose
 
@@ -109,11 +118,12 @@ Here's a snippet of Python code to illustrate how a Spark session might be initi
 
 ```python
 spark = SparkSession.builder \
+    .master('local[*]') \
     .appName("test") \
     .getOrCreate()
 ```
 
-In this setup, if "test" is the first application started, its Spark UI will be accessible on port 4040. If another session, say with the app name "test2", is launched while "test" is still running, "test2" would then use the next available port, which would be 4041, and so forth. This configuration ensures that each Spark application's UI is isolated and accessible for monitoring and troubleshooting.
+In this setup, if "test" is the first application started, its Spark UI will be accessible on port 4040. If another session, say with the app name "test2", is launched while "test" is still running, "test2" would then use the next available port, which would be 4041, and so forth. This configuration ensures that each Spark application's UI is isolated and accessible for monitoring and troubleshooting. Go to [http://localhost:4040](http://localhost:4040) on the web to access the Spark UI.
 
 ```yml
 version: '3'
@@ -122,15 +132,12 @@ services:
     build: .
     image: spark_jupyter_lab:latest  # Name and tag the image
      ports:
-      - "8888:8888"  # Jupyter Lab
-      - "8080:8080" # Spark Master UI
-      - "8081:8081" # Spark Worker UI
-      - "7077:7077"
-      - "4040:4040"  # Spark UI
-      - "4041:4041"  # Spark UI for the second application
-      - "4042:4042"  # Spark UI for the third application
-      - "4043:4043"  # Spark UI for the fourth application
-      - "4044:4044"  # Spark UI for the fifth application
+      - "8888:8888"  # Jupyter Lab, for accessing notebooks
+      - "7077:7077"  # Spark Master, for worker node registration and job submissions in standalone mode
+      - "4040-4044:4040-4044"  # Range for Spark UI, allows monitoring of multiple Spark jobs
+      - "8080:8080"  # Spark Master UI, for monitoring the Spark cluster
+      - "8081:8081"  # Spark Worker UI (optional), for detailed worker monitoring if separate worker nodes are used
+      - "18080:18080"  # Spark History Server, for reviewing job histories
     volumes:
       - ./code:/opt/spark/work-dir  # Mount the 'code' directory to the container's work directory
 ```
@@ -141,7 +148,7 @@ services:
 After preparing the Docker environment for Spark, the next step is to establish a local Spark cluster. This process involves initiating the Spark master and worker services, which will allow for the execution of Spark jobs in a clustered environment.
 
 ### Transitioning from Local to Cluster Mode
-Before we explore setting up a Spark cluster, it's important to note that for the majority of scripts in this module, we've initialized Spark in local mode by configuring the Spark session with `.master("local[*]")`. This setting runs Spark on a single machine and uses all available cores, simulating a distributed environment on a single host. It's an excellent way for beginners to learn Spark without the complexity of a distributed cluster.
+Before we explore setting up a Spark cluster, it's important to note that for the majority of scripts in this module, we've initialized Spark in local mode by configuring the Spark session with `.master("local[*]")`. This setting runs Spark on a single machine and uses all available cores, simulating a distributed environment on a single host. This mode is ideal for beginners to understand Spark's functionality without the overhead of managing a distributed cluster.
 
 However, to better mimic a production environment and understand how Spark operates in a clustered setting, we'll set up a standalone Spark cluster using Docker. This approach provides a closer approximation to how Spark runs in a distributed environment, allowing for multiple worker nodes and more realistic resource management.
 
@@ -154,21 +161,32 @@ Within our docker container, Spark is located in `/opt/spark/` directory. Open a
 - ./sbin/start-worker.sh
 - ./bin/spark-submit
 
-First, we need to run `start-master.sh` which will start a local standalone spark cluster at [http://localhost:8080/](http://localhost:8080/). Assuming you are the utilizing the `Dockerfile` and `docker-compose` file we implemented earlier, the Spark cluster will be named something like `Spark Master at spark://f22e994ff136:7077`, `spark://f22e994ff136:7077` being the URL we will reference below prior to executing our `06_spark_sql.py` script. `f22e994ff136` being the hostname generated for my specific Docker container.
+1. **Start the Spark Master:**
+   Open a terminal in the running Docker container and execute the following command to start the Spark master service:
 
 ```shell
-./sbin/start-master.sh
+../sbin/start-master.sh
 ```
-After you've ran the command to start our master server, we will need to run the following command to start a worker, which will be used to execute our spark jobs.
+
+This command launches a local standalone Spark master at [http://localhost:8080/](http://localhost:8080/). If you are using the Dockerfile and docker-compose file from earlier, the Spark cluster will display as Spark Master at `spark://<container-id>:7077`, where `<container-id>` is the hostname generated for your Docker container (e.g., f22e994ff136).
+
+2. **Start a Spark Worker:**
+Next, start a worker node that will execute the Spark jobs by running:
 
 ```shell
-./sbin/start-worker.sh <master-spark-URL>
+../sbin/start-worker.sh `<master-spark-URL>`
+```
+Replace `<master-spark-URL>` with the master's URL obtained in the previous step. For example:
 
-# example:
-# ./sbin/start-worker.sh spark://f22e994ff136:7077`
+```shell
+../sbin/start-worker.sh spark://f22e994ff136:7077
 ```
 
-After running these scripts in our docker container's terminal. we can
+After initiating these services, you can access the UI for both the Master and Worker nodes. The Master UI is available at [http://localhost:8080](http://localhost:8080), which provides an overview of the cluster, and if you have configured additional ports for worker UIs, they can typically be accessed starting at [http://localhost:8081](http://localhost:8081).
+
+![spark-worker](../static/images/de-zc/w5/spark-worker.png)
+
+By setting up a local Spark cluster in Docker, you get a practical, scalable environment for developing and testing Spark applications, closely mirroring the configurations used in production settings. In the [section](#integrating-with-google-cloud-storage-gcs) below, we will utilize our newly created local spark cluster to run `06_spark_sql.py` with the `spark-submit` command.
 
 ## Spark's Core Concepts
 
@@ -176,7 +194,6 @@ After running these scripts in our docker container's terminal. we can
 RDDs, or Resilient Distributed Datasets, are a fundamental concept in Apache Spark, representing a distributed collection of objects. Internally, Spark DataFrames are built upon RDDs, introducing an additional layer of abstraction that facilitates more efficient data handling and processing.
 
 ### Example of Reading Data into a Dataframe
-
 Consider the following code block where we read a Parquet file from a Google Cloud Storage (GCS) bucket into a Spark DataFrame. Upon executing df.take(5), Spark returns an array of the first five rows from the DataFrame:
 
 ```python
@@ -210,7 +227,7 @@ Similar to Spark's DataFrames, the Pandas library in Python provides an abstract
 
 ### Converting DataFrame to an RDD
 
-In PySpark, converting a DataFrame to an RDD is straightforward; applying the `.rdd` method to a DataFrame exposes the underlying RDD, enabling access to its operations. In the example below, I've created a simple spark dataframe and converted it into an rdd, which gives us access to some potentially useful functions, such as `mapPartition`. mapPartition 
+In PySpark, converting a DataFrame to an RDD is accomplished by invoking the `.rdd` attribute. This conversion allows access to lower-level RDD operations, such as `map` and `mapPartitions`. Below is an example demonstrating this conversion:
 
 ```python
 from pyspark.sql import SparkSession
@@ -224,60 +241,62 @@ df = spark.createDataFrame(data, "int").toDF("number")
 
 # Show the original DataFrame
 df.show()
-```
-Resulting dataframe:
-| number |
-|--------|
-| 1      |
-| 2      |
-| 3      |
-| 4      |
-| 5      |
 
-
-```python
 # Convert the DataFrame to an RDD
 rdd = df.rdd
-```
 
-With the dataframe converted to an RDD, we now have the ability to use functions such as `map` and `mapPartition`, which are functions exclusive to RDDs.
+# Resulting RDD
+# [Row(number=1), Row(number=2), Row(number=3), Row(number=4), Row(number=5)]
 
-However, this conversion strips away the DataFrame optimizations, and one must manually manage the structured nature of the data in RDD operations.
-
-Resulting RDD: 
-
-[Row(number=1), Row(number=2), Row(number=3), Row(number=4), Row(number=5)]
-
-
-```python
 # Use the map function to square each number
 squared_rdd = rdd.map(lambda row: row['number'] ** 2)
 
 # Collect and show the results
 squared_numbers = squared_rdd.collect()
 print(squared_numbers)
+
+#Result of implementing map function on our RDD:
+# [1, 4, 9, 16, 25]
 ```
 
-Result of implementing `map` function on our rdd:
-
-[1, 4, 9, 16, 25]
-
+Although converting a DataFrame to an RDD provides access to lower-level functions, it bypasses the optimizations inherent to DataFrames. Therefore, this operation should be used judiciously, considering the potential performance implications.
 
 ## Integrating with Google Cloud Storage (GCS)
 
 Simply add this line of code into your `06_spark_sql.py` script in order to authenticate to your gcs bucket.
 
 ```python
+mport argparse
+
+import pyspark
+from pyspark.sql import SparkSession
+from pyspark.sql import functions as F
+
+parser = argparse.ArgumentParser()
+
+parser.add_argument('--input_green', required=True)
+parser.add_argument('--input_yellow', required=True)
+parser.add_argument('--output', required=True)
+
+args = parser.parse_args()
+
+input_green = args.input_green
+input_yellow = args.input_yellow
+output = args.output
+
 spark = SparkSession.builder \
     .appName('test') \
     .getOrCreate()
 
-spark._jsc.hadoopConfiguration().set("google.cloud.auth.service.account.json.keyfile","/opt/spark/work-dir/dtc-de-zoomcamp-410523-cc75fbfdb8b8.json")
+# add this line to script 
+spark._jsc.hadoopConfiguration().set("google.cloud.auth.service.account.json.keyfile","/opt/spark/work-dir/dtc-de-zoomcamp-12345-678910.json")
+
+# Remainder of script...
 ```
 
 ```shell
-export MASTER_URL="spark://f22e994ff136:7077"
-export BUCKET_NAME="mage-zoomcamp-jonah-oliver"
+export MASTER_URL="spark://<container-id>:7077"
+export BUCKET_NAME="your-cloud-bucket"
 export GREEN_PATH="gs://${BUCKET_NAME}/ny_taxi_data/service=green/year=2019/month=*"
 export YELLOW_PATH="gs://${BUCKET_NAME}/ny_taxi_data/service=yellow/year=2019/month=*"
 export OUTPUT_PATH="gs://${BUCKET_NAME}/ny_taxi_data/report/revenue/year=2019"
@@ -293,6 +312,9 @@ spark-submit \
 
 ```
 
+After running `spark-submit` while passing in our script parameters, we can access the job details at 
+[http://localhost:4040](http://localhost:4040) during the job runtime, but note it only becomes active and accessible when a Spark application is running. When the job is complete, the UI will no longer be accessible. If you are running some of the scripts in module 5 within a Jupyter Notebook, this will likely not be an issue.
+
 
 ## Google Dataproc
 
@@ -306,13 +328,26 @@ gs://mage-zoomcamp-jonah-oliver/ny_taxi_data/code/06_spark_sql.py
 
 ### Submitting a Job with Google Cloud SDK
 
+Finally, after creating and configuring a [Google Dataproc cluster](https://console.cloud.google.com/dataproc/clusters?project=dtc-de-zoomcamp-410523), we can now use the Google Cloud SDK CLI to run our script on a cluster. Be sure to upload `06_spark_sql.py` to a directory in your bucket, i.e. `your-bucket/code/`.
+
+1. **Auth to Google Cloud**
+```shell
+gcloud auth login
+```
+
+2. **Set Google Project ID**
+```
+gcloud config set project <project-id>
+```
+
+3. **Run Spark Submit**
 ```shell
 gcloud dataproc jobs submit pyspark \
     --cluster=de-zoomcamp-cluster \
     --region=us-central1 \
-    gs://mage-zoomcamp-jonah-oliver/ny_taxi_data/code/06_spark_sql.py \
+    gs://mage-zoomcamp-bucket/ny_taxi_data/code/06_spark_sql.py \
     -- \
-    --input_yellow=gs://mage-zoomcamp-jonah-oliver/ny_taxi_data/service=yellow/year=2019/month=*
-    --input_green=gs://mage-zoomcamp-jonah-oliver/ny_taxi_data/service=green/year=2019/month=*
-    --output=gs://mage-zoomcamp-jonah-oliver/ny_taxi_data/report/revenue/year=2019
+    --input_yellow=gs://mage-zoomcamp-bucket/ny_taxi_data/service=yellow/year=2019/month=* \
+    --input_green=gs://mage-zoomcamp-bucket/ny_taxi_data/service=green/year=2019/month=* \
+    --output=gs://mage-zoomcamp-bucket/ny_taxi_data/report/revenue/year=2019
 ```
