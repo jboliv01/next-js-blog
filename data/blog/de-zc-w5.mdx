@@ -294,6 +294,8 @@ spark._jsc.hadoopConfiguration().set("google.cloud.auth.service.account.json.key
 # Remainder of script...
 ```
 
+Now, lets open up a terminal in our Docker Container and set our environmental variables.
+
 ```shell
 export MASTER_URL="spark://<container-id>:7077"
 export BUCKET_NAME="your-cloud-bucket"
@@ -301,6 +303,8 @@ export GREEN_PATH="gs://${BUCKET_NAME}/ny_taxi_data/service=green/year=2019/mont
 export YELLOW_PATH="gs://${BUCKET_NAME}/ny_taxi_data/service=yellow/year=2019/month=*"
 export OUTPUT_PATH="gs://${BUCKET_NAME}/ny_taxi_data/report/revenue/year=2019"
 ```
+
+With our variables configured, we can now run Spark Submit on our local cluster.
 
 ```shell
 spark-submit \
