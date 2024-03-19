@@ -1,0 +1,30 @@
+---
+title: 'Data Engineering Zoomcamp Capstone Project'
+date: '2024-03-015'
+tags: ['Data Engineering', 'Apache Spark', 'Distributed Computing', 'Big Data', 'Docker','Cloud Storage', 'GCP', 'Python']
+draft: true
+summary: End-to-end Capstone Project for DTC Data Engineering Zoomcamp
+---
+
+enable apis: https://console.cloud.google.com/apis/api/file.googleapis.com/metrics?project=dtc-de-zoomcamp-410523
+
+Error creating Connector: googleapi: Error 400: Connector ID must follow the pattern ^[a-z][-a-z0-9]{0,23}[a-z0-9]$.
+
+de-capstone-project-connector too long
+
+gcloud auth configure-docker \
+    us-east1-docker.pkg.dev
+
+docker pull mageai/mageai:latest
+
+docker tag mageai/mageai:latest us-east1-docker.pkg.dev/dtc-de-zoomcamp-410523/mage-docker/mageai:latest
+
+docker push us-east1-docker.pkg.dev/dtc-de-zoomcamp-410523/mage-docker/mageai:latest
+
+curl -v -u my-api-key: "https://stream.companieshouse.gov.uk/companies"
+
+curl -v -u my-api-key: "https://stream.companieshouse.gov.uk/charges"
+
+
+curl -v --location 'https://stream.companieshouse.gov.uk/companies?timepoint=187124872486' \
+--header 'Authorization: Basic my-auth-key'
