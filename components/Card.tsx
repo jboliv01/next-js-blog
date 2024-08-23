@@ -3,8 +3,14 @@
 import { useState } from 'react';
 import Image from './Image';
 import Link from './Link';
+interface CardProps {
+  title: string;
+  description: string;
+  href?: string;
+  imgSrcArray?: string[];
+}
 
-const Card = ({ title, description, imgSrcArray = [], href }) => {
+const Card: React.FC<CardProps> = ({ title, description, imgSrcArray = [], href }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
 
   const handlePrevImage = () => {
