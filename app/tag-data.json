@@ -1,9 +1,1 @@
-{
-    "guide": 2,
-    "python": 1,
-    "docker": 1,
-    "postgresql": 1,
-    "terraform": 1,
-    "book": 0,
-    "code": 2
-}
+{"data-engineering":5,"apache-spark":2,"distributed-computing":2,"big-data":2,"docker":3,"cloud-storage":2,"gcp":5,"python":5,"guide":8,"dbt":1,"sql":3,"cicd":1,"data-visualization":1,"window-functions":1,"bigquery":2,"machine-learning":1,"orchestration":1,"mage":1,"postgresql":2,"terraform":1,"next-js":2,"tailwind":1,"feature":2,"multi-author":1,"github":1,"markdown":1,"code":1,"features":1}
