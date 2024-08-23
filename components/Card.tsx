@@ -1,28 +1,22 @@
-'use client';
+'use client'
 
-import { useState } from 'react';
-import Image from './Image';
-import Link from './Link';
-interface CardProps {
-  title: string;
-  description: string;
-  href?: string;
-  imgSrcArray?: string[];
-}
+import { useState } from 'react'
+import Image from './Image'
+import Link from './Link'
 
-const Card: React.FC<CardProps> = ({ title, description, imgSrcArray = [], href }) => {
-  const [currentIndex, setCurrentIndex] = useState(0);
+const Card = ({ title, description, imgSrcArray = [], href }) => {
+  const [currentIndex, setCurrentIndex] = useState(0)
 
   const handlePrevImage = () => {
-    setCurrentIndex((prevIndex) => (prevIndex - 1 + imgSrcArray.length) % imgSrcArray.length);
-  };
+    setCurrentIndex((prevIndex) => (prevIndex - 1 + imgSrcArray.length) % imgSrcArray.length)
+  }
 
   const handleNextImage = () => {
-    setCurrentIndex((prevIndex) => (prevIndex + 1) % imgSrcArray.length);
-  };
+    setCurrentIndex((prevIndex) => (prevIndex + 1) % imgSrcArray.length)
+  }
 
   return (
-    <div className="md:max-w-[544px] p-4 md:w-1/2">
+    <div className="p-4 md:w-1/2 md:max-w-[544px]">
       <div
         className={`${
           imgSrcArray && 'h-full'
@@ -35,8 +29,8 @@ const Card: React.FC<CardProps> = ({ title, description, imgSrcArray = [], href 
                 <Image
                   alt={title}
                   src={imgSrcArray[currentIndex]}
-                  className="object-cover object-center md:h-36 lg:h-48 w-full" // Ensure full width and cover
-                  width={544} // These dimensions help in maintaining the aspect ratio
+                  className="w-full object-cover object-center md:h-36 lg:h-48"
+                  width={544}
                   height={306}
                 />
               </Link>
@@ -44,7 +38,7 @@ const Card: React.FC<CardProps> = ({ title, description, imgSrcArray = [], href 
               <Image
                 alt={title}
                 src={imgSrcArray[currentIndex]}
-                className="object-cover object-center md:h-36 lg:h-48 w-full" // Ensure full width and cover
+                className="w-full object-cover object-center md:h-36 lg:h-48"
                 width={544}
                 height={306}
               />
@@ -86,7 +80,7 @@ const Card: React.FC<CardProps> = ({ title, description, imgSrcArray = [], href 
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default Card;
+export default Card
